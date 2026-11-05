@@ -1,0 +1,218 @@
+{
+  "pyramids": {
+    "file": "pyramids.jpg",
+    "title": "The Great Sphinx, Pyramids of Gizeh-1839) by David Roberts, RA.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:The_Great_Sphinx,_Pyramids_of_Gizeh-1839)_by_David_Roberts,_RA.jpg",
+    "artist": "David Roberts",
+    "license": "Public domain",
+    "category": "Достопримечательности",
+    "subject": "Great Pyramid of Giza"
+  },
+  "great-wall": {
+    "file": "great-wall.jpg",
+    "title": "20090529 Great Wall 8185.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:20090529_Great_Wall_8185.jpg",
+    "artist": "Jakub Hałun",
+    "license": "CC BY-SA 3.0",
+    "category": "Достопримечательности",
+    "subject": "Great Wall of China"
+  },
+  "taj-mahal": {
+    "file": "taj-mahal.jpg",
+    "title": "Taj Mahal in March 2004.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Taj_Mahal_in_March_2004.jpg",
+    "artist": "Dhirad, picture edited by J. A. Knudsen",
+    "license": "CC BY-SA 3.0",
+    "category": "Достопримечательности",
+    "subject": "Taj Mahal"
+  },
+  "colosseum": {
+    "file": "colosseum.jpg",
+    "title": "Colosseum in Rome, Italy - April 2007.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Colosseum_in_Rome,_Italy_-_April_2007.jpg",
+    "artist": "Diliff",
+    "license": "CC BY-SA 2.5",
+    "category": "Достопримечательности",
+    "subject": "Colosseum Rome"
+  },
+  "pizza": {
+    "file": "pizza.jpg",
+    "title": "Margherita Originale.JPG",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Margherita_Originale.JPG",
+    "artist": "Mario56",
+    "license": "CC BY-SA 3.0",
+    "category": "Еда",
+    "subject": "pizza margherita"
+  },
+  "sushi": {
+    "file": "sushi.jpg",
+    "title": "Sushi platter.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Sushi_platter.jpg",
+    "artist": "chidorian from Japan",
+    "license": "CC BY-SA 2.0",
+    "category": "Еда",
+    "subject": "sushi platter"
+  },
+  "hamburger": {
+    "file": "hamburger.jpg",
+    "title": "NCI Visuals Food Hamburger.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:NCI_Visuals_Food_Hamburger.jpg",
+    "artist": "Len Rizzi (photographer)",
+    "license": "Public domain",
+    "category": "Еда",
+    "subject": "hamburger"
+  },
+  "guitar": {
+    "file": "guitar.jpg",
+    "title": "Harri Stojka 30.08.2008c.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Harri_Stojka_30.08.2008c.jpg",
+    "artist": "Manfred Werner - Tsui",
+    "license": "CC BY-SA 3.0",
+    "category": "Предметы",
+    "subject": "acoustic guitar"
+  },
+  "camera": {
+    "file": "camera.jpg",
+    "title": "Group of Vintage Minature Novelty Cameras- HIT Camera, Minetta Camera & Kent Camera (8453592003).jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Group_of_Vintage_Minature_Novelty_Cameras-_HIT_Camera,_Minetta_Camera_%26_Kent_Camera_(8453592003).jpg",
+    "artist": "Joe Haupt from USA",
+    "license": "CC BY-SA 2.0",
+    "category": "Предметы",
+    "subject": "vintage camera"
+  },
+  "typewriter": {
+    "file": "typewriter.jpg",
+    "title": "Olympia Simplex.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Olympia_Simplex.jpg",
+    "artist": "Sammlung der Medien und Wissenschaft",
+    "license": "CC BY 4.0",
+    "category": "Предметы",
+    "subject": "typewriter"
+  },
+  "compass": {
+    "file": "compass.jpg",
+    "title": "Plastic-compass.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Plastic-compass.jpg",
+    "artist": "Evan-Amos",
+    "license": "Public domain",
+    "category": "Предметы",
+    "subject": "compass"
+  },
+  "flamingo": {
+    "file": "flamingo.jpg",
+    "title": "Phoenicopterus ruber in São Paulo Zoo.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Phoenicopterus_ruber_in_S%C3%A3o_Paulo_Zoo.jpg",
+    "artist": "Wilfredor",
+    "license": "CC0",
+    "category": "Животные",
+    "subject": "flamingo"
+  },
+  "balloon": {
+    "file": "balloon.jpg",
+    "title": "Cappadocia Balloon Inflating Wikimedia Commons.JPG",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Cappadocia_Balloon_Inflating_Wikimedia_Commons.JPG",
+    "artist": "Benh LIEU SONG (Flickr)",
+    "license": "CC BY-SA 3.0",
+    "category": "Природа",
+    "subject": "hot air balloon"
+  },
+  "aurora": {
+    "file": "aurora.jpg",
+    "title": "Aurora borealis over Eielson Air Force Base, Alaska.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Aurora_borealis_over_Eielson_Air_Force_Base,_Alaska.jpg",
+    "artist": "United States Air Force photo by Senior Airman Joshua Strang",
+    "license": "Public domain",
+    "category": "Природа",
+    "subject": "aurora borealis"
+  },
+  "sakura": {
+    "file": "sakura.jpg",
+    "title": "Lake Kawaguchiko Sakura Mount Fuji 4.JPG",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Lake_Kawaguchiko_Sakura_Mount_Fuji_4.JPG",
+    "artist": "Midori",
+    "license": "CC BY 3.0",
+    "category": "Природа",
+    "subject": "cherry blossom"
+  },
+  "lighthouse": {
+    "file": "lighthouse.jpg",
+    "title": "Osmussaar. Lighthouse..jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Osmussaar._Lighthouse..jpg",
+    "artist": "Aleksandr Abrosimov",
+    "license": "CC BY-SA 3.0 ee",
+    "category": "Природа",
+    "subject": "lighthouse"
+  },
+  "chess": {
+    "file": "chess.jpg",
+    "title": "Opening chess position from black side.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Opening_chess_position_from_black_side.jpg",
+    "artist": "MichaelMaggs",
+    "license": "CC BY-SA 3.0",
+    "category": "Предметы",
+    "subject": "chess board"
+  },
+  "eiffel-tower": {
+    "file": "eiffel-tower.jpg",
+    "title": "Tour Eiffel Wikimedia Commons.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Tour_Eiffel_Wikimedia_Commons.jpg",
+    "artist": "Benh LIEU SONG",
+    "license": "Public domain",
+    "category": "Достопримечательности",
+    "subject": "Eiffel Tower"
+  },
+  "statue-of-liberty": {
+    "file": "statue-of-liberty.jpg",
+    "title": "Statue of Liberty frontal 2.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Statue_of_Liberty_frontal_2.jpg",
+    "artist": "Daniel Schwen",
+    "license": "Public domain",
+    "category": "Достопримечательности",
+    "subject": "Statue of Liberty"
+  },
+  "croissant": {
+    "file": "croissant.jpg",
+    "title": "Le Croissant French Bakery - November 2023 - Sarah Stierch 06.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Le_Croissant_French_Bakery_-_November_2023_-_Sarah_Stierch_06.jpg",
+    "artist": "Missvain",
+    "license": "CC BY 4.0",
+    "category": "Еда",
+    "subject": "croissant"
+  },
+  "red-panda": {
+    "file": "red-panda.jpg",
+    "title": "MC Kleiner Panda.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:MC_Kleiner_Panda.jpg",
+    "artist": "Christian Mehlführer, User:Chmehl. Edit by Böhringer",
+    "license": "CC BY 2.5",
+    "category": "Животные",
+    "subject": "red panda"
+  },
+  "axolotl": {
+    "file": "axolotl.jpg",
+    "title": "Ambystoma mexicanum 1.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Ambystoma_mexicanum_1.jpg",
+    "artist": "Stan Shebs",
+    "license": "CC BY-SA 3.0",
+    "category": "Животные",
+    "subject": "axolotl"
+  },
+  "koala": {
+    "file": "koala.jpg",
+    "title": "Koala climbing tree.jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Koala_climbing_tree.jpg",
+    "artist": "Diliff",
+    "license": "CC BY-SA 3.0",
+    "category": "Животные",
+    "subject": "koala"
+  },
+  "panda": {
+    "file": "panda.jpg",
+    "title": "Panda géant (Ailuropoda melanoleuca) (1).jpg",
+    "descriptionUrl": "https://commons.wikimedia.org/wiki/File:Panda_g%C3%A9ant_(Ailuropoda_melanoleuca)_(1).jpg",
+    "artist": "Gzen92",
+    "license": "CC BY-SA 4.0",
+    "category": "Животные",
+    "subject": "giant panda"
+  }
+}

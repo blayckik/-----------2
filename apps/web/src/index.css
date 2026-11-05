@@ -1,0 +1,178 @@
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+@import '@fontsource/manrope/800.css';
+@import '@fontsource/unbounded/500.css';
+@import '@fontsource/unbounded/600.css';
+@import '@fontsource/unbounded/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-rgb: 7 7 17;
+  --surface-rgb: 19 19 33;
+  --raised-rgb: 24 24 42;
+  --line-rgb: 48 48 72;
+  --text-rgb: 248 250 252;
+  --muted-rgb: 148 163 184;
+  --accent-rgb: 139 92 246;
+  --accent2-rgb: 236 72 153;
+  --safe-top: 0px;
+  --safe-bottom: 0px;
+  color-scheme: dark;
+}
+
+html.light {
+  --bg-rgb: 244 243 250;
+  --surface-rgb: 255 255 255;
+  --raised-rgb: 255 255 255;
+  --line-rgb: 203 203 220;
+  --text-rgb: 21 21 42;
+  --muted-rgb: 100 102 130;
+  --accent-rgb: 124 58 237;
+  --accent2-rgb: 219 39 119;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  background: rgb(var(--bg-rgb));
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: rgb(var(--bg-rgb));
+  color: rgb(var(--text-rgb));
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'ss01' on, 'cv01' on;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+  color: #fff;
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Unbounded', 'Manrope', sans-serif;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-gradient {
+    background: linear-gradient(100deg, #c4b5fd 0%, #a78bfa 35%, #f0abfc 75%, #f9a8d4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .safe-top {
+    padding-top: var(--safe-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .scroll-pad-bottom {
+    padding-bottom: calc(24px + var(--safe-bottom));
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(90deg, transparent, black 12px, black calc(100% - 12px), transparent);
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  .glass-strong {
+    background: rgba(14, 14, 26, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px);
+  }
+
+  .game-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+}
+
+/* Inputs on iOS */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 14px;
+  }
+}
+
+/* Hide number input arrows */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Light theme tuning for hard-coded white overlays */
+html.light .glass,
+html.light .glass-strong {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(20, 20, 43, 0.08);
+}
+
+html.light .text-gradient {
+  background: linear-gradient(100deg, #6d28d9 0%, #7c3aed 38%, #db2777 78%, #e11d48 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

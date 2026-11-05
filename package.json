@@ -1,0 +1,36 @@
+{
+  "name": "funbox",
+  "private": true,
+  "version": "1.0.0",
+  "description": "FUNBOX — Telegram entertainment ecosystem",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,bot,web -c magenta,cyan,green \"pnpm --filter @funbox/api dev\" \"pnpm --filter @funbox/bot dev\" \"pnpm --filter @funbox/web dev\"",
+    "dev:api": "pnpm --filter @funbox/api dev",
+    "dev:web": "pnpm --filter @funbox/web dev",
+    "dev:bot": "pnpm --filter @funbox/bot dev",
+    "build": "pnpm --filter @funbox/api build && pnpm --filter @funbox/bot build && pnpm --filter @funbox/web build",
+    "db:start": "node scripts/db-local.mjs",
+    "db:generate": "pnpm --filter @funbox/api db:generate",
+    "db:push": "pnpm --filter @funbox/api db:push",
+    "db:deploy": "pnpm --filter @funbox/api db:deploy",
+    "db:migrate": "pnpm --filter @funbox/api db:migrate",
+    "db:seed": "pnpm --filter @funbox/api db:seed",
+    "db:studio": "pnpm --filter @funbox/api db:studio",
+    "smoke": "node scripts/smoke.mjs",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @funbox/api test"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15",
+    "@electric-sql/pglite-socket": "0.2.18",
+    "concurrently": "9.1.2",
+    "puppeteer-core": "24.10.2",
+    "socket.io-client": "4.8.1",
+    "typescript": "5.7.3"
+  }
+}

@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.data
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+!**/.env.example
+screens
+apps/api/uploads
+*.log
+install.log
+.vscode
+.idea
