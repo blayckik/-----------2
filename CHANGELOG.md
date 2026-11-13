@@ -17,6 +17,7 @@
 - 24 фотографии для Guess the Image с атрибуцией Wikimedia Commons (`CREDITS.md`).
 - Локальные SVG-аватары вместо внешнего CDN.
 - `docs/ARCHITECTURE.md`, `docs/API.md`, smoke-тесты и UI-тесты Puppeteer.
+- `scripts/doctor.mjs` и команда `pnpm doctor`: preflight-проверка `.env`, секретов, миграций, изображений и зависимостей.
 - Скрипт `scripts/prepare-github.ps1` для безопасной очистки регенерируемых файлов перед загрузкой на GitHub.
 
 ### Changed
@@ -44,6 +45,7 @@
 - Browser UI-сценарии: без `pageerror` и console errors.
 - Миграции на чистой PostgreSQL: 2 миграции, 39 таблиц.
 - Production-сборка Mini App раздаётся API и проверена в браузере.
+- `pnpm doctor`: 24 OK, 0 ошибок; предупреждения только про demo-режим и отсутствие `node_modules` после очистки.
 
 ### Repository
 
