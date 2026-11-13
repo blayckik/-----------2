@@ -27,7 +27,7 @@ const navItems = [
 ];
 
 const immersiveRoutes = ['/games/quiz', '/games/word-duel', '/chat/', '/admin'];
-const hideHeaderRoutes = ['/chat', '/games/quiz', '/games/word-duel', '/games/wyr', '/games/image'];
+const hideHeaderRoutes = ['/chat', '/games/quiz', '/games/word-duel', '/games/wyr', '/games/image', '/about'];
 
 export function AppShell() {
   const location = useLocation();

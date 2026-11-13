@@ -7,6 +7,7 @@ import { Button } from './components/ui';
 import { useAuth } from './context/AuthContext';
 import { api, BOT_USERNAME } from './lib/api';
 import { HomePage } from './pages/HomePage';
+import { AboutPage } from './pages/AboutPage';
 import { GamesPage } from './pages/GamesPage';
 import { QuizPage } from './pages/QuizPage';
 import { DuelPage } from './pages/DuelPage';
@@ -36,6 +37,7 @@ const screenRoutes: Record<string, string> = {
   friends: '/friends',
   achievements: '/achievements',
   chat: '/chat',
+  about: '/about',
 };
 
 export function App() {
@@ -84,6 +86,7 @@ export function App() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="search" element={<SearchPage />} />
+        <Route path="about" element={<AboutPage />} />
         <Route path="join/:code" element={<JoinRedirect />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

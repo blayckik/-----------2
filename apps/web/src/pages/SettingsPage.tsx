@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Info, LogOut, Moon, Shield, Smartphone, Sun, UserCog, Users } from 'lucide-react';
+import { BookOpen, ChevronRight, Info, LogOut, Moon, Shield, Smartphone, Sun, UserCog, Users } from 'lucide-react';
 import { api, getErrorMessage, DEMO_MODE, BOT_USERNAME } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -135,8 +135,22 @@ export function SettingsPage() {
         <Toggle checked={settings.soundEnabled} onChange={() => toggle('soundEnabled')} label="Звуки" description="Звуковые эффекты в играх" />
         <button
           type="button"
+          onClick={() => navigate('/about')}
+          className="flex w-full items-center justify-between border-t border-line py-3 text-left"
+        >
+          <span className="flex items-center gap-2.5">
+            <BookOpen size={16} className="text-muted" />
+            <span>
+              <span className="block text-sm font-semibold text-primary">Как играть</span>
+              <span className="text-[10px] text-muted">Гид по режимам, наградам и безопасности</span>
+            </span>
+          </span>
+          <ChevronRight size={16} className="text-muted" />
+        </button>
+        <button
+          type="button"
           onClick={() => navigate('/profile')}
-          className="flex w-full items-center justify-between py-3 text-left"
+          className="flex w-full items-center justify-between border-t border-line py-3 text-left"
         >
           <span className="flex items-center gap-2.5">
             <UserCog size={16} className="text-muted" />
