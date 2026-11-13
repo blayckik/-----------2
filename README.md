@@ -469,6 +469,14 @@ node scripts/ui-test.mjs
 
 Проходят пользовательские сценарии в браузере и сохраняют скриншоты в `screens/`.
 
+### Очистка перед GitHub
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/prepare-github.ps1
+```
+
+Удаляет только `node_modules`, `.data`, `dist` и тестовые скриншоты. Исходники, миграции и `.env` остаются. История изменений — [CHANGELOG.md](CHANGELOG.md).
+
 ### Миграции на чистой PostgreSQL
 
 ```bash
