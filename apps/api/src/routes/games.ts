@@ -9,6 +9,7 @@ import { awardRewards, trackMetric } from '../services/progress.js';
 import { userCardSelect, friendIds } from '../services/users.js';
 import { notifyUser } from '../services/notifications.js';
 import { env } from '../config/env.js';
+import { queryBooleanSchema } from '../lib/validation.js';
 
 const router = Router();
 
@@ -234,7 +235,7 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const query = z
-      .object({ count: z.coerce.number().int().min(1).max(20).default(8), fresh: z.coerce.boolean().default(false) })
+      .object({ count: z.coerce.number().int().min(1).max(20).default(8), fresh: queryBooleanSchema })
       .parse(req.query);
     const voted = query.fresh
       ? (

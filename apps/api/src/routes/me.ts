@@ -5,6 +5,7 @@ import { asyncHandler, notFound, ok } from '../lib/http.js';
 import { requireAuth } from '../middleware/auth.js';
 import { trackMetric, levelProgress } from '../services/progress.js';
 import { friendIds, userCardSelect } from '../services/users.js';
+import { optionalImageUrlSchema } from '../lib/validation.js';
 
 const router = Router();
 
@@ -21,8 +22,8 @@ const profileSchema = z.object({
     .optional(),
   displayName: z.string().trim().max(48).nullable().optional(),
   bio: z.string().trim().max(280).nullable().optional(),
-  avatarUrl: z.string().max(500).nullable().optional(),
-  bannerUrl: z.string().max(500).nullable().optional(),
+  avatarUrl: optionalImageUrlSchema,
+  bannerUrl: optionalImageUrlSchema,
   accentColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)

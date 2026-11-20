@@ -7,6 +7,7 @@ import { writeLimiter } from '../middleware/rateLimit.js';
 import { trackMetric } from '../services/progress.js';
 import { notifyUser } from '../services/notifications.js';
 import { blockedUserIds, userCardSelect } from '../services/users.js';
+import { optionalImageUrlSchema } from '../lib/validation.js';
 
 const router = Router();
 
@@ -102,7 +103,7 @@ router.post(
     const body = z
       .object({
         content: z.string().trim().min(1, 'Напишите текст').max(2000),
-        imageUrl: z.string().max(500).optional().nullable(),
+        imageUrl: optionalImageUrlSchema,
         categoryId: z.string().optional().nullable(),
       })
       .parse(req.body);

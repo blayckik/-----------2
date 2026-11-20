@@ -8,9 +8,20 @@ import { requireAuth, requireModerator, requireAdmin } from '../middleware/auth.
 import { userCardSelect } from '../services/users.js';
 import { levelFromXp } from '../services/progress.js';
 import { getIO } from '../lib/io.js';
+import { optionalImageUrlSchema } from '../lib/validation.js';
 
 const router = Router();
 router.use(requireAuth);
+
+/**
+ * Иерархия модерации: ADMIN может управлять модераторами, MODERATOR — только
+ * обычными пользователями. Администратора нельзя заблокировать через панель.
+ */
+function canModerateRole(actor: 'USER' | 'MODERATOR' | 'ADMIN', target: 'USER' | 'MODERATOR' | 'ADMIN') {
+  if (target === 'ADMIN') return false;
+  if (target === 'MODERATOR') return actor === 'ADMIN';
+  return true;
+}
 
 router.get(
   '/stats',
@@ -149,7 +160,9 @@ router.post(
     const target = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!target) return notFound('Пользователь не найден');
     if (target.id === req.auth!.id) throw badRequest('Нельзя заблокировать себя');
-    if (target.role === 'ADMIN' && req.auth!.role !== 'ADMIN') throw forbidden('Нельзя блокировать администратора');
+    if (!canModerateRole(req.auth!.role, target.role)) {
+      throw forbidden('Недостаточно прав для блокировки этой роли');
+    }
 
     await prisma.$transaction([
       prisma.user.update({
@@ -182,6 +195,10 @@ router.patch(
     if (req.params.id === req.auth!.id) throw badRequest('Нельзя изменить собственную роль');
     const target = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!target) return notFound('Пользователь не найден');
+    if (target.role === 'ADMIN' && body.role !== 'ADMIN') {
+      const admins = await prisma.user.count({ where: { role: 'ADMIN', isBanned: false } });
+      if (admins <= 1) throw badRequest('Нельзя снять роль с последнего администратора');
+    }
     const user = await prisma.user.update({
       where: { id: target.id },
       data: { role: body.role },
@@ -345,9 +362,19 @@ router.post(
         action: z.enum(['none', 'deletePost', 'banUser']).default('none'),
       })
       .parse(req.body);
-    const report = await prisma.report.findUnique({ where: { id: req.params.id } });
+    const report = await prisma.report.findUnique({
+      where: { id: req.params.id },
+      include: { reportedUser: { select: { id: true, role: true, isBanned: true } } },
+    });
     if (!report) return notFound('Жалоба не найдена');
     if (report.status !== 'PENDING') throw badRequest('Жалоба уже обработана');
+    if (body.action === 'banUser') {
+      if (!report.reportedUser) throw badRequest('В жалобе не указан пользователь для блокировки');
+      if (!canModerateRole(req.auth!.role, report.reportedUser.role)) {
+        throw forbidden('Недостаточно прав для блокировки этой роли');
+      }
+      if (report.reportedUser.isBanned) throw badRequest('Пользователь уже заблокирован');
+    }
 
     await prisma.$transaction(async (tx) => {
       if (body.action === 'deletePost' && report.targetPostId) {
@@ -419,7 +446,7 @@ const questionSchema = z.object({
   correctOption: z.number().int().min(0).max(5).nullable().optional(),
   answerText: z.string().trim().max(120).nullable().optional(),
   hint: z.string().trim().max(300).nullable().optional(),
-  mediaUrl: z.string().trim().max(500).nullable().optional(),
+  mediaUrl: optionalImageUrlSchema,
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
   isActive: z.boolean().default(true),
   isApproved: z.boolean().default(true),

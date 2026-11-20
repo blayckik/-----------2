@@ -7,6 +7,7 @@ import { writeLimiter } from '../middleware/rateLimit.js';
 import { assertParticipant, findOrCreateDirectConversation, sendChatMessage } from '../services/chat.js';
 import { userCardSelect } from '../services/users.js';
 import { emitToUser } from '../lib/io.js';
+import { optionalImageUrlSchema } from '../lib/validation.js';
 
 const router = Router();
 
@@ -132,7 +133,7 @@ router.post(
       .object({
         content: z.string().trim().min(1).max(2000),
         type: z.enum(['TEXT', 'IMAGE', 'STICKER']).default('TEXT'),
-        imageUrl: z.string().max(500).optional().nullable(),
+        imageUrl: optionalImageUrlSchema,
       })
       .parse(req.body);
     const message = await sendChatMessage({
