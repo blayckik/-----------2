@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCheck, ChevronRight } from 'lucide-react';
 import { api, getErrorMessage } from '../lib/api';
@@ -35,15 +34,33 @@ export function NotificationsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['notifications', 1],
-    queryFn: async () =>
-      (await api.get('/notifications?page=1')).data.data as {
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['notifications'],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) =>
+      (await api.get(`/notifications?page=${pageParam}`)).data.data as {
         notifications: Notification[];
         unread: number;
         page: number;
       },
+    getNextPageParam: (lastPage) =>
+      lastPage.notifications.length === 20 ? lastPage.page + 1 : undefined,
   });
+
+  const notifications = [
+    ...new Map(
+      (data?.pages ?? [])
+        .flatMap((page) => page.notifications)
+        .map((notification) => [notification.id, notification]),
+    ).values(),
+  ];
+  const unread = data?.pages[0]?.unread ?? 0;
 
   const read = useMutation({
     mutationFn: async (notification: Notification) => {
@@ -87,7 +104,7 @@ export function NotificationsPage() {
             <h1 className="font-display text-xl font-semibold">Уведомления</h1>
           </div>
         </div>
-        {(data?.unread ?? 0) > 0 && (
+        {unread > 0 && (
           <Button size="sm" variant="secondary" loading={readAll.isPending} onClick={() => readAll.mutate()} icon={<CheckCheck size={13} />}>
             Прочитать
           </Button>
@@ -96,7 +113,7 @@ export function NotificationsPage() {
 
       {isLoading ? (
         <PageSkeleton />
-      ) : !data?.notifications.length ? (
+      ) : notifications.length === 0 ? (
         <Card className="p-2">
           <EmptyState
             icon="🔔"
@@ -106,7 +123,7 @@ export function NotificationsPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {data.notifications.map((notification, index) => (
+          {notifications.map((notification, index) => (
             <motion.button
               key={notification.id}
               type="button"
@@ -138,6 +155,16 @@ export function NotificationsPage() {
               <ChevronRight size={15} className="mt-2 shrink-0 text-muted" />
             </motion.button>
           ))}
+          {hasNextPage && (
+            <Button
+              variant="secondary"
+              fullWidth
+              loading={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
+            >
+              Показать ещё
+            </Button>
+          )}
         </div>
       )}
     </div>
