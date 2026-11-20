@@ -19,6 +19,9 @@
 - `docs/ARCHITECTURE.md`, `docs/API.md`, smoke-тесты и UI-тесты Puppeteer.
 - `scripts/doctor.mjs` и команда `pnpm doctor`: preflight-проверка `.env`, секретов, миграций, изображений и зависимостей.
 - Экран «Как играть» (`/about`): гид по 4 режимам, XP/Coins, безопасности, FAQ и приглашению друзей.
+- CI GitHub Actions: install → prisma generate → typecheck → tests → build.
+- `SECURITY.md`, `CONTRIBUTING.md`, `docs/TESTING.md`, `docs/DEPLOYMENT.md`.
+- Бесконечная пагинация уведомлений («Показать ещё») через `useInfiniteQuery`.
 - Скрипт `scripts/prepare-github.ps1` для безопасной очистки регенерируемых файлов перед загрузкой на GitHub.
 
 ### Changed
@@ -37,17 +40,22 @@
 - Дублирование аватаров в чате и наложение заголовков на игровых экранах.
 - Некорректная подпись репоста и дублирование изображения в ленте.
 - Отображение чужих категорий в настройках Quiz Battle.
+- Небезопасные image URL (`javascript:`, `data:`, `file:`, `http://`) теперь отклоняются на backend.
+- Модератор больше не может банить модератора/админа; нельзя снять роль с последнего администратора.
+- `fresh=false` в Would You Rather больше не превращается в `true`.
+- Уведомления старше первых 20 теперь доступны через пагинацию.
 
 ### Verified
 
 - TypeScript: `api`, `web`, `bot` — без ошибок.
-- Unit-тесты: 8/8.
+- Unit-тесты: 12/12.
 - Интеграционные smoke-тесты: 92/92.
 - Browser UI-сценарии: без `pageerror` и console errors.
 - Миграции на чистой PostgreSQL: 2 миграции, 39 таблиц.
 - Production-сборка Mini App раздаётся API и проверена в браузере.
 - Web typecheck и production build с новым экраном `/about` — успешно.
-- `pnpm doctor`: 24 OK, 0 ошибок; предупреждения только про demo-режим и отсутствие `node_modules` после очистки.
+- `pnpm doctor`: 25 OK, 0 ошибок; предупреждение только про отсутствие `BOT_TOKEN` в demo-режиме.
+- GitHub Actions CI добавлен и выполняет typecheck, 12 тестов и production build.
 
 ### Repository
 

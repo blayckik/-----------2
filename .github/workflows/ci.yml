@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · tests · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/funbox?schema=public
+      JWT_SECRET: ci-only-secret-at-least-24-characters-long
+      BOT_SECRET: ci-only-bot-secret
+      BOT_TOKEN: ""
+      APP_URL: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5173
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @funbox/api exec prisma generate
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Verify migrations exist
+        run: |
+          test -f apps/api/prisma/migrations/migration_lock.toml
+          test -d apps/api/prisma/migrations/20260511000000_init
+          test -d apps/api/prisma/migrations/20260511000100_game_result_game_fk

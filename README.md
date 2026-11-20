@@ -1,5 +1,7 @@
 # 🎮 FUNBOX — Telegram Entertainment Ecosystem
 
+[![CI](https://github.com/blayckik/-----------2/actions/workflows/ci.yml/badge.svg)](https://github.com/blayckik/-----------2/actions/workflows/ci.yml)
+
 **FUNBOX** — полноценная развлекательная платформа внутри Telegram: Mini App, Telegram-бот, backend на Express + Prisma + PostgreSQL, real-time игры через Socket.IO, социальная сеть, чат, задания, достижения, экономика и административная панель.
 
 > FUN Coins — виртуальная игровая валюта. Она не имеет денежной стоимости, не продаётся за реальные деньги и не подлежит выводу.
@@ -460,7 +462,7 @@ docker compose up -d --build
 pnpm test
 ```
 
-Покрывают математику уровней, периоды квестов, ограничения букв Word Duel и валидацию Telegram initData (валидная подпись, подмена, истёкший TTL, отсутствие hash).
+Покрывают математику уровней, периоды квестов, ограничения букв Word Duel, валидацию Telegram initData и политику image URL (`javascript:`, `data:`, `http://` запрещены). Всего **12/12**.
 
 ### Smoke-тесты (требуют запущенных API + БД + seed)
 
@@ -500,6 +502,10 @@ node scripts/migrate-test.mjs
 
 - [docs/API.md](docs/API.md) — REST, Socket.IO events, admin и bot API.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — архитектура, потоки данных, модель безопасности.
+- [docs/TESTING.md](docs/TESTING.md) — матрица тестов, smoke, UI и миграции.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — production, HTTPS, reverse proxy, backup.
+- [SECURITY.md](SECURITY.md) — политика безопасности и отчёт об уязвимостях.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — процесс разработки и формат коммитов.
 - Prisma schema: `apps/api/prisma/schema.prisma`.
 
 ---
