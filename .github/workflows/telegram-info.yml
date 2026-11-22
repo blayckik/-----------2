@@ -1,0 +1,24 @@
+name: Telegram Info
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  get-me:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch bot identity
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/getMe" > telegram-info.json
+          node -e "const j=require('./telegram-info.json');console.log('username:',j.result.username);console.log('id:',j.result.id)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: telegram-info
+          path: telegram-info.json
+          retention-days: 1
