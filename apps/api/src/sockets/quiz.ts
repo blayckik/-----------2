@@ -126,7 +126,7 @@ async function roomPayload(roomId: string) {
       name: participant.user?.username
         ? `@${participant.user.username}`
         : participant.user?.firstName ?? 'Игрок',
-      avatarUrl: participant.user?.avatarUrl,
+      avatarUrl: participant.user?.avatarUrl ?? null,
       isBot: participant.isBot,
       score: participant.score,
     })),
@@ -312,7 +312,7 @@ async function loadRuntime(roomId: string): Promise<Runtime | null> {
       name: participant.user?.username
         ? `@${participant.user.username}`
         : participant.user?.firstName ?? 'Игрок',
-      avatarUrl: participant.user?.avatarUrl,
+      avatarUrl: participant.user?.avatarUrl ?? null,
       isBot: participant.isBot,
       score: 0,
       correct: 0,

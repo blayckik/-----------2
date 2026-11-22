@@ -114,7 +114,7 @@ async function roomPayload(roomId: string) {
       name: participant.user?.username
         ? `@${participant.user.username}`
         : participant.user?.firstName ?? 'Игрок',
-      avatarUrl: participant.user?.avatarUrl,
+      avatarUrl: participant.user?.avatarUrl ?? null,
       isBot: participant.isBot,
       score: participant.score,
     })),
@@ -304,7 +304,7 @@ export function attachDuel(io: Server) {
             name: participant.user?.username
               ? `@${participant.user.username}`
               : participant.user?.firstName ?? 'Игрок',
-            avatarUrl: participant.user?.avatarUrl,
+            avatarUrl: participant.user?.avatarUrl ?? null,
             isBot: participant.isBot,
             score: 0,
             words: [],
