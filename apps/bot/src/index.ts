@@ -406,6 +406,32 @@ bot.catch((error, ctx) => {
 });
 
 let lastReminderDate = '';
+async function configureBot() {
+  try {
+    await bot.telegram.setMyCommands([
+      { command: 'start', description: 'Открыть FUNBOX' },
+      { command: 'profile', description: 'Мой профиль' },
+      { command: 'games', description: 'Игры' },
+      { command: 'rating', description: 'Рейтинг' },
+      { command: 'daily', description: 'Ежедневная награда' },
+      { command: 'settings', description: 'Настройки' },
+      { command: 'id', description: 'Мой Telegram ID' },
+      { command: 'help', description: 'Помощь' },
+    ]);
+    if (isHttps) {
+      await bot.telegram.setChatMenuButton({
+        menuButton: {
+          type: 'web_app',
+          text: 'FUNBOX',
+          web_app: { url: WEBAPP_URL },
+        },
+      });
+    }
+  } catch (error) {
+    console.warn('[bot] menu configuration failed:', error instanceof Error ? error.message : error);
+  }
+}
+
 async function dailyReminders() {
   const now = new Date();
   const moscowHour = Number(
@@ -437,6 +463,7 @@ async function dailyReminders() {
 bot.launch(() => {
   console.log(`🤖 FUNBOX bot @${BOT_USERNAME} is running`);
   console.log(`   Mini App: ${WEBAPP_URL}`);
+  void configureBot();
   setTimeout(() => void dailyReminders(), 15_000);
   setInterval(() => void dailyReminders(), 30 * 60 * 1000);
 });

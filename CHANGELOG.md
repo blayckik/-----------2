@@ -13,6 +13,7 @@
 - `amvera.yml`, `docs/AMVERA.md`: деплой приложения и managed PostgreSQL в Amvera Cloud.
 - Docker entrypoint: `SEED_ON_START` и `RUN_BOT` для production-контейнера.
 - Команда бота `/id` для настройки `ADMIN_TELEGRAM_IDS`.
+- Бот сам регистрирует команды и web_app menu button при старте (production).
 
 ### Changed
 
