@@ -62,7 +62,7 @@
 
 ### Telegram-бот (Telegraf)
 
-- `/start`, `/profile`, `/games`, `/rating`, `/daily`, `/help`, `/settings`.
+- `/start`, `/profile`, `/games`, `/rating`, `/daily`, `/help`, `/settings`, `/id`.
 - Красивое приветствие с inline-кнопками и открытием Mini App.
 - Реферальные ссылки, бонус за приглашение.
 - Настройки уведомлений (друзья, сообщения, достижения, daily, игровые приглашения).
