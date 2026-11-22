@@ -1,0 +1,74 @@
+name: Telegram Bot (temporary runner)
+
+# Запускается вручную. Нужен для проверки бота из сети, где api.telegram.org
+# недоступен напрямую. Для production используйте постоянный сервер/Docker.
+on:
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: 'Публичный HTTPS URL API/Mini App'
+        required: true
+        type: string
+      duration_minutes:
+        description: 'Сколько минут держать long polling (макс. 350)'
+        required: false
+        default: '120'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-bot-runner
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    name: Telegraf long polling
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      NODE_ENV: production
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      BOT_SECRET: ${{ secrets.BOT_SECRET }}
+      API_URL: ${{ inputs.public_url }}
+      WEBAPP_URL: ${{ inputs.public_url }}
+      BOT_USERNAME: funbox_bot
+      RUN_MINUTES: ${{ inputs.duration_minutes }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install --global pnpm@11.7.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bot
+        run: pnpm --filter @funbox/bot build
+
+      - name: Resolve bot identity and configure menu
+        run: |
+          set -euo pipefail
+          ME=$(curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/getMe")
+          USERNAME=$(echo "$ME" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result.username))")
+          echo "Bot username: @${USERNAME}"
+          echo "BOT_USERNAME=${USERNAME}" >> "$GITHUB_ENV"
+          curl -fsS -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands" \
+            -H 'Content-Type: application/json' \
+            -d '{"commands":[{"command":"start","description":"Открыть FUNBOX"},{"command":"profile","description":"Мой профиль"},{"command":"games","description":"Игры"},{"command":"rating","description":"Рейтинг"},{"command":"daily","description":"Ежедневная награда"},{"command":"settings","description":"Настройки"},{"command":"help","description":"Помощь"}]}' > /dev/null
+          curl -fsS -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setChatMenuButton" \
+            -H 'Content-Type: application/json' \
+            -d "{\"menu_button\":{\"type\":\"web_app\",\"text\":\"FUNBOX\",\"web_app\":{\"url\":\"${WEBAPP_URL}\"}}}" > /dev/null || true
+
+      - name: Run bot with timeout
+        run: |
+          set -euo pipefail
+          timeout "${RUN_MINUTES}m" node apps/bot/dist/index.js || code=$?
+          if [ "${code:-0}" -ne 124 ] && [ "${code:-0}" -ne 0 ]; then exit "$code"; fi
