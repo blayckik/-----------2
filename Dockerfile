@@ -40,6 +40,7 @@ COPY --from=build /app/apps/bot/package.json ./apps/bot/package.json
 COPY --from=build /app/apps/bot/node_modules ./apps/bot/node_modules
 COPY --from=build /app/apps/bot/dist ./apps/bot/dist
 COPY --from=build /app/apps/web/dist ./apps/web/dist
+COPY --from=build /app/apps/web/public ./apps/web/public
 COPY scripts/docker-entrypoint.sh /usr/local/bin/funbox-entrypoint
 RUN chmod +x /usr/local/bin/funbox-entrypoint \
     && mkdir -p /app/apps/api/uploads

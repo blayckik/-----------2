@@ -39,8 +39,12 @@ function readImageManifest(): Record<
   string,
   { file: string; title: string; descriptionUrl: string; artist: string; license: string; subject: string }
 > {
-  const file = path.resolve(__dirname, '../../web/public/images/guess/manifest.json');
-  if (!fs.existsSync(file)) return {};
+  const candidates = [
+    path.resolve(__dirname, '../../web/public/images/guess/manifest.json'),
+    path.resolve(__dirname, '../../web/dist/images/guess/manifest.json'),
+  ];
+  const file = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!file) return {};
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
