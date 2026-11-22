@@ -4,18 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Bot,
   Check,
   ChevronRight,
   Clock3,
   Copy,
   Crown,
   DoorOpen,
-  Loader2,
   Lock,
   Play,
-  Plus,
   Radio,
+  RefreshCw,
   Share2,
   Sparkles,
   Swords,
@@ -31,7 +29,7 @@ import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
 import { haptic, shareInvite } from '../lib/telegram';
 import { cn, formatNumber, formatTimeLeft, userName } from '../lib/utils';
-import type { Character, QuizQuestion, QuizRoom } from '../types';
+import type { Character, QuizQuestion, QuizRoom, UserCard } from '../types';
 import { Avatar, Badge, Button, Card, Input, Modal, Progress, Spinner } from '../components/ui';
 
 interface Category {
@@ -53,6 +51,17 @@ interface RevealPayload {
 interface FinishedPayload {
   leaderboard: Array<Character & { place: number; isWinner: boolean }>;
   rewards: Array<{ userId: string; xp: number; coins: number; place: number }>;
+}
+
+interface LiveRoom {
+  id: string;
+  code: string;
+  hostId: string;
+  maxPlayers: number;
+  isPrivate: boolean;
+  host: UserCard;
+  category: { name: string; icon: string | null } | null;
+  participants: Array<{ id: string; userId: string }>;
 }
 
 type View = 'setup' | 'lobby' | 'playing' | 'finished';
@@ -78,17 +87,31 @@ export function QuizPage() {
   const [inviteInfo, setInviteInfo] = useState<{ link: string; code: string } | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [joinCode, setJoinCode] = useState(codeFromUrl);
-  const [botCount, setBotCount] = useState(3);
   const [questionCount, setQuestionCount] = useState(7);
   const [categoryId, setCategoryId] = useState('');
   const [isPrivate, setIsPrivate] = useState(true);
   const [remaining, setRemaining] = useState(0);
   const joinedRef = useRef(false);
   const roomRef = useRef<QuizRoom | null>(null);
+  const autoStartedRef = useRef(false);
 
   useEffect(() => {
     roomRef.current = room;
   }, [room]);
+
+  useEffect(() => {
+    if (!connected || view !== 'lobby' || !room || !me) return;
+    if (room.hostId !== me.id || room.status !== 'WAITING') return;
+    if (!room.settings?.autoStart || room.participants.length < 2 || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    setStarting(true);
+    void emitAck('quiz:start', { code: room.code })
+      .catch((error) => {
+        autoStartedRef.current = false;
+        toast.error(getErrorMessage(error));
+      })
+      .finally(() => setStarting(false));
+  }, [connected, emitAck, me, room, toast, view]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -97,6 +120,12 @@ export function QuizPage() {
   const { data: categories } = useQuery({
     queryKey: ['categories', 'quiz'],
     queryFn: async () => (await api.get('/games/categories?game=quiz-battle')).data.data as Category[],
+  });
+
+  const { data: liveRooms, isFetching: roomsFetching, refetch: refetchRooms } = useQuery({
+    queryKey: ['quiz-live-rooms'],
+    queryFn: async () => (await api.get('/games/quiz/rooms')).data.data as LiveRoom[],
+    refetchInterval: 10_000,
   });
 
   useEffect(() => {
@@ -176,27 +205,24 @@ export function QuizPage() {
     return () => window.clearInterval(timer);
   }, [question]);
 
-  async function createRoom(options: { bots: number; privateRoom: boolean; autoStart: boolean }) {
+  async function createRoom(options: { privateRoom: boolean }) {
     if (!connected) {
       toast.error('Подключение к игровому серверу…');
       return;
     }
     setCreating(true);
     setFinished(null);
+    autoStartedRef.current = false;
     try {
       const result = await emitAck<{ room: QuizRoom }>('quiz:create', {
         categoryId: categoryId || undefined,
         isPrivate: options.privateRoom,
-        botCount: options.bots,
         questionCount,
       });
       setRoom(result.room);
       setView('lobby');
-      if (options.autoStart) {
-        setStarting(true);
-        await emitAck('quiz:start', { code: result.room.code });
-        toast.info('Матч начинается!');
-      }
+      void refetchRooms();
+      if (!options.privateRoom) toast.success('Публичная комната создана — старт при подключении второго игрока');
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -211,11 +237,13 @@ export function QuizPage() {
       return;
     }
     setJoining(true);
+    autoStartedRef.current = false;
     try {
       const result = await emitAck<{ room: QuizRoom }>('quiz:join', { code: code.toUpperCase() });
       setRoom(result.room);
       setView('lobby');
       setShowJoin(false);
+      void refetchRooms();
       haptic('success');
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -276,6 +304,7 @@ export function QuizPage() {
 
   function leaveToSetup() {
     if (room && connected) socket?.emit('quiz:leave', { code: room.code });
+    autoStartedRef.current = false;
     setRoom(null);
     setQuestion(null);
     setReveal(null);
@@ -350,7 +379,7 @@ export function QuizPage() {
                       ⚡ до 150 очков
                     </span>
                     <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/75">
-                      🤖 AI-соперники
+                      👥 реальные игроки
                     </span>
                   </div>
                 </div>
@@ -398,24 +427,16 @@ export function QuizPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Card className="p-4">
                   <p className="text-[11px] font-semibold text-muted">Соперники</p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    {[0, 1, 2, 3].map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setBotCount(value)}
-                        className={cn(
-                          'h-9 flex-1 rounded-xl border text-[11px] font-bold transition',
-                          botCount === value
-                            ? 'border-violet-400/40 bg-violet-500/20 text-violet-200'
-                            : 'border-line bg-white/[0.03] text-muted',
-                        )}
-                      >
-                        {value === 0 ? '0' : `${value} 🤖`}
-                      </button>
-                    ))}
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
+                      <Users size={17} />
+                    </span>
+                    <div>
+                      <p className="text-[11px] font-bold text-primary">Только реальные</p>
+                      <p className="text-[9px] text-muted">2–8 игроков</p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-[9px] text-muted/70">Боты не нужны, если играете с другом</p>
+                  <p className="mt-2 text-[9px] leading-relaxed text-muted/70">Ботов нет: игра начнётся, когда присоединится второй человек.</p>
                 </Card>
                 <Card className="p-4">
                   <p className="text-[11px] font-semibold text-muted">Вопросов</p>
@@ -473,31 +494,79 @@ export function QuizPage() {
                 </span>
               </button>
 
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-primary">Живые комнаты</p>
+                    <p className="text-[10px] text-muted">Публичные лобби, куда можно зайти сейчас</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void refetchRooms()}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted transition hover:text-primary"
+                    aria-label="Обновить комнаты"
+                  >
+                    <RefreshCw size={14} className={roomsFetching ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {!liveRooms?.length ? (
+                    <div className="rounded-xl border border-dashed border-line px-3 py-4 text-center">
+                      <p className="text-[11px] font-semibold text-primary">Пока никто не ждёт</p>
+                      <p className="mt-1 text-[9px] leading-relaxed text-muted">Создайте публичную комнату — она появится здесь у других игроков.</p>
+                    </div>
+                  ) : (
+                    liveRooms.slice(0, 4).map((live) => {
+                      const full = live.participants.length >= live.maxPlayers;
+                      return (
+                        <div key={live.id} className="flex items-center gap-2.5 rounded-xl border border-line bg-white/[0.02] p-2.5">
+                          <Avatar user={live.host} size={32} />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[11px] font-semibold text-primary">{userName(live.host)}</p>
+                            <p className="text-[9px] text-muted">
+                              {live.category ? `${live.category.icon ?? '🧠'} ${live.category.name}` : 'Микс'} · {live.participants.length}/{live.maxPlayers}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={full}
+                            onClick={() => void joinRoom(live.code)}
+                          >
+                            {full ? 'Полно' : 'Войти'}
+                          </Button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </Card>
+
               <div className="space-y-2">
                 <Button
                   fullWidth
                   size="lg"
                   loading={creating}
-                  onClick={() => createRoom({ bots: botCount || 3, privateRoom: true, autoStart: true })}
+                  onClick={() => createRoom({ privateRoom: isPrivate })}
                   icon={<Zap size={18} />}
                 >
-                  Быстрый матч
+                  Создать комнату
                 </Button>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="secondary"
-                    loading={creating}
-                    onClick={() => createRoom({ bots: botCount, privateRoom: isPrivate, autoStart: false })}
-                    icon={<Plus size={15} />}
-                  >
-                    Создать комнату
-                  </Button>
                   <Button variant="secondary" onClick={() => setShowJoin(true)} icon={<DoorOpen size={15} />}>
                     По коду
                   </Button>
+                  <Button
+                    variant="secondary"
+                    loading={creating}
+                    onClick={() => createRoom({ privateRoom: false })}
+                    icon={<Radio size={15} />}
+                  >
+                    Публичная
+                  </Button>
                 </div>
                 <p className="pt-1 text-center text-[10px] text-muted/60">
-                  Быстрый матч создаёт приватную комнату с ботами и стартует автоматически
+                  Без ботов. Отправьте код другу или зайдите в живую комнату.
                 </p>
               </div>
             </motion.div>
@@ -563,11 +632,10 @@ export function QuizPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-semibold text-primary">{participant.name}</p>
                         <p className="text-[10px] text-muted">
-                          {participant.isBot ? 'AI-соперник' : participant.userId === room.hostId ? 'Хост' : 'Игрок'}
+                          {participant.userId === room.hostId ? 'Хост' : 'Игрок'}
                         </p>
                       </div>
                       {participant.userId === room.hostId && <Crown size={16} className="text-amber-300" />}
-                      {participant.isBot && <Bot size={16} className="text-violet-300" />}
                     </div>
                   ))}
                 </Card>

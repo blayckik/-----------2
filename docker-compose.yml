@@ -51,6 +51,7 @@ services:
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-180}
       RUN_MIGRATIONS: "true"
+      SEED_ON_START: ${SEED_ON_START:-false}
     ports:
       - "${API_PORT:-4000}:4000"
     volumes:

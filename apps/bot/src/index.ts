@@ -285,10 +285,11 @@ async function sendHelp(ctx: Context) {
     '/rating — топ игроков',
     '/daily — ежедневная награда',
     '/settings — уведомления',
+    '/id — ваш Telegram ID',
     '/help — эта справка',
     '',
     '<b>Как играть</b>',
-    '• Quiz Battle — викторина на скорость с ботами или друзьями.',
+    '• Quiz Battle — викторина на скорость с друзьями и реальными игроками.',
     '• Word Duel — составьте больше слов из 16 букв за 90 секунд.',
     '• Would You Rather — голосуйте и сравнивайте себя с другими.',
     '• Guess the Image — угадайте фото за 3 попытки.',
@@ -344,6 +345,12 @@ bot.command('daily', (ctx) => sendDaily(ctx));
 bot.command('help', (ctx) => sendHelp(ctx));
 bot.command('settings', (ctx) => sendSettings(ctx));
 bot.command('menu', (ctx) => sendWelcome(ctx));
+bot.command('id', (ctx) =>
+  ctx.reply(
+    `Ваш Telegram ID: <code>${ctx.from?.id ?? 'неизвестно'}</code>\n@${ctx.from?.username ?? 'без_username'}\n\nЭтот ID нужен для ADMIN_TELEGRAM_IDS.`,
+    { parse_mode: 'HTML' },
+  ),
+);
 
 bot.action('menu', async (ctx) => {
   await ctx.answerCbQuery();

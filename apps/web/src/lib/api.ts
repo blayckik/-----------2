@@ -5,8 +5,24 @@ const TOKEN_KEY = 'funbox_token';
 const DEMO_KEY = 'funbox_demo_telegram_id';
 
 export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || '';
-export const DEMO_MODE = String(import.meta.env.VITE_DEMO_MODE ?? 'false') === 'true';
-export const BOT_USERNAME = (import.meta.env.VITE_BOT_USERNAME as string | undefined) || 'funbox_demo_bot';
+
+declare global {
+  interface Window {
+    __FUNBOX_CONFIG__?: {
+      botUsername?: string;
+      demoAuthEnabled?: boolean;
+      appUrl?: string;
+    };
+  }
+}
+
+const runtimeConfig = typeof window !== 'undefined' ? window.__FUNBOX_CONFIG__ : undefined;
+export const DEMO_MODE =
+  runtimeConfig?.demoAuthEnabled ?? String(import.meta.env.VITE_DEMO_MODE ?? 'false') === 'true';
+export const BOT_USERNAME =
+  runtimeConfig?.botUsername ||
+  (import.meta.env.VITE_BOT_USERNAME as string | undefined) ||
+  'funbox_demo_bot';
 
 export const api = axios.create({
   baseURL: `${API_BASE}/api`,

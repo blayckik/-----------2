@@ -42,13 +42,6 @@ interface Runtime {
 }
 
 const runtimes = new Map<string, Runtime>();
-const BOTS = [
-  { name: 'Quizzy', avatar: '🤖' },
-  { name: 'NovaBot', avatar: '🛸' },
-  { name: 'Brainiac', avatar: '🧠' },
-  { name: 'Pixel', avatar: '👾' },
-  { name: 'Lucky', avatar: '🍀' },
-];
 
 function code() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -122,6 +115,7 @@ async function roomPayload(roomId: string) {
     status: room.status,
     isPrivate: room.isPrivate,
     maxPlayers: room.maxPlayers,
+    settings: room.settings,
     game: room.game,
     category: room.category,
     host: room.host,
@@ -291,55 +285,9 @@ function beginQuestion(runtime: Runtime, io: Server) {
   });
 
   const currentIndex = runtime.index;
-  const questionId = question.id;
   schedule(runtime, () => {
     if (runtime.index === currentIndex && runtime.phase === 'question') reveal(runtime, io);
   }, runtime.durationMs);
-
-  for (const member of runtime.members.values()) {
-    if (!member.isBot) continue;
-    const delay = 1800 + Math.random() * 7500;
-    schedule(runtime, async () => {
-      if (runtime.phase !== 'question' || runtime.index !== currentIndex) return;
-      const map = runtime.answers.get(questionId);
-      if (!map || map.has(member.participantId)) return;
-      const correct = Math.random() < (question.difficulty === 'HARD' ? 0.5 : 0.68);
-      const choice = correct
-        ? question.correctOption
-        : (question.correctOption + 1 + Math.floor(Math.random() * (question.options.length - 1))) %
-          question.options.length;
-      const responseMs = Math.round(delay);
-      const points = correct ? 100 + Math.round((1 - responseMs / runtime.durationMs) * 50) : 0;
-      map.set(member.participantId, { choice, correct, points });
-      member.score += points;
-      if (correct) member.correct += 1;
-      try {
-        await prisma.gameAnswer.create({
-          data: {
-            roomId: runtime.roomId,
-            participantId: member.participantId,
-            questionId,
-            selected: choice,
-            isCorrect: correct,
-            points,
-            responseMs,
-          },
-        });
-      } catch {
-        // Unique constraint protects a double answer; ignore.
-      }
-      io.to(`quiz:${runtime.code}`).emit('quiz:answered', {
-        questionIndex: currentIndex,
-        answered: map.size,
-        total: runtime.members.size,
-      });
-      if (map.size >= runtime.members.size) {
-        schedule(runtime, () => {
-          if (runtime.index === currentIndex) reveal(runtime, io);
-        }, 500);
-      }
-    }, delay);
-  }
 }
 
 function nextQuestion(runtime: Runtime, io: Server) {
@@ -404,12 +352,10 @@ export function attachQuiz(io: Server) {
         const data = payload as {
           categoryId?: string;
           isPrivate?: boolean;
-          botCount?: number;
           questionCount?: number;
         };
         const game = await prisma.game.findUnique({ where: { slug: 'quiz-battle' } });
         if (!game) return ackError(ack, 'Игра не настроена');
-        const botCount = Math.max(0, Math.min(5, Math.floor(Number(data.botCount ?? 0))));
         const questionCount = Math.max(3, Math.min(12, Math.floor(Number(data.questionCount ?? 7))));
         if (data.categoryId) {
           const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
@@ -435,18 +381,9 @@ export function attachQuiz(io: Server) {
             hostId: userId,
             categoryId: data.categoryId || null,
             isPrivate: Boolean(data.isPrivate),
-            maxPlayers: 3 + botCount,
-            settings: { botCount, questionCount },
-            participants: {
-              create: [
-                { userId },
-                ...Array.from({ length: botCount }, (_, index) => ({
-                  isBot: true,
-                  botName: BOTS[index % BOTS.length].name,
-                  botAvatar: BOTS[index % BOTS.length].avatar,
-                })),
-              ],
-            },
+            maxPlayers: 8,
+            settings: { questionCount, autoStart: !Boolean(data.isPrivate) },
+            participants: { create: [{ userId }] },
           },
         });
 
@@ -502,7 +439,7 @@ export function attachQuiz(io: Server) {
         if (room.hostId !== userId) return ackError(ack, 'Начать игру может только хост');
         if (room.status !== 'WAITING') return ackError(ack, 'Игра уже началась');
         if (room.participants.length < 2) {
-          return ackError(ack, 'Пригласите друга или создайте комнату с ботами');
+          return ackError(ack, 'Нужен второй реальный игрок. Пригласите друга или создайте публичную комнату');
         }
 
         const settings = (room.settings ?? {}) as { questionCount?: number };

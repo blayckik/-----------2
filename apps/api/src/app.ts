@@ -102,6 +102,21 @@ export function createApp() {
 
   app.use('/api', (req, res) => fail(res, 404, `API route ${req.method} ${req.originalUrl} not found`, 'NOT_FOUND'));
 
+  // Runtime-конфигурация фронтенда: позволяет менять username бота и demo-режим
+  // без пересборки Vite-бандла (важно для Docker/Amvera).
+  app.get('/config.js', (_req, res) => {
+    res
+      .type('application/javascript')
+      .set('Cache-Control', 'no-store')
+      .send(
+        `window.__FUNBOX_CONFIG__ = ${JSON.stringify({
+          botUsername: env.BOT_USERNAME,
+          demoAuthEnabled: env.demoAuthEnabled,
+          appUrl: env.APP_URL,
+        })};`,
+      );
+  });
+
   const webDist = path.resolve(__dirname, '../../web/dist');
   if (fs.existsSync(webDist)) {
     app.use(express.static(webDist, { maxAge: '1h', index: false }));

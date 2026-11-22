@@ -12,7 +12,7 @@
 
 | Quiz Battle | Social feed |
 |---|---|
-| ![Quiz Battle](docs/screenshots/quiz-live.png) | ![Social feed](docs/screenshots/social.png) |
+| ![Quiz Battle](docs/screenshots/quiz-setup.png) | ![Social feed](docs/screenshots/social.png) |
 
 | Wallet | Admin panel |
 |---|---|
@@ -79,7 +79,7 @@
 - Socket.IO: Quiz Battle, Word Duel, чат, статусы прочтения, typing.
 - Серверная проверка ответов и слов, подсчёт очков, идемпотентные награды.
 - Rate limiting, Helmet, CORS allowlist, Zod-валидация, безопасные uploads.
-- PostgreSQL-миграции и seed с демо-данными.
+- PostgreSQL-миграции; demo-seed для локальной разработки и production-seed только с контентом.
 - Admin API + отдельная админ-панель.
 - Healthcheck `/api/health`.
 
@@ -194,6 +194,13 @@ pnpm db:start
 ```bash
 pnpm db:push     # синхронизировать схему (быстрый локальный вариант)
 pnpm db:seed     # заполнить демо-данными (ОЧИЩАЕТ текущую базу)
+```
+
+Для production — только контент, без фейковых игроков:
+
+```bash
+pnpm --filter @funbox/api db:seed:prod   # игры, вопросы, квесты, магазин; users: 0
+pnpm --filter @funbox/api db:reset:prod  # ОПАСНО: очищает БД и заново сеет контент
 ```
 
 Альтернатива через миграции:
@@ -373,17 +380,17 @@ docker compose up -d --build
 ### Quiz Battle
 
 - Лобби в PostgreSQL, live-состояние в памяти процесса.
-- До 8 игроков, боты с задержкой ответа, 5–10 вопросов.
+- До 8 реальных игроков, 5–10 вопросов, live-лобби и приглашения.
 - 15–22 секунды на вопрос, очки за правильность + скорость.
 - Сервер хранит `GameAnswer`, исключает повторные ответы, считает результат, XP/Coins и достижения.
 - Reconnect в лобби/игре по коду; публичные комнаты в каталоге.
 
 ### Word Duel
 
-- 16 букв, 90 секунд, 1×1 с другом или ботом.
+- 16 букв, 90 секунд, дуэль 1×1 только с реальным игроком.
 - Словарь `russian-words` (100k+ слов) проверяется на сервере.
 - Нельзя использовать букву чаще, чем она есть на поле; нельзя повторять слово.
-- Бот подбирает слова из текущего поля.
+- Второй игрок подключается по коду или приглашению; ботов в production нет.
 - Итоги сохраняются в `GameResult`, начисляются XP/Coins.
 
 ### Would You Rather
@@ -504,6 +511,7 @@ node scripts/migrate-test.mjs
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — архитектура, потоки данных, модель безопасности.
 - [docs/TESTING.md](docs/TESTING.md) — матрица тестов, smoke, UI и миграции.
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — production, HTTPS, reverse proxy, backup.
+- [docs/AMVERA.md](docs/AMVERA.md) — деплой в Amvera Cloud: app + PostgreSQL + бот.
 - [SECURITY.md](SECURITY.md) — политика безопасности и отчёт об уязвимостях.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — процесс разработки и формат коммитов.
 - Prisma schema: `apps/api/prisma/schema.prisma`.

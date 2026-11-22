@@ -220,10 +220,9 @@ export function attachDuel(io: Server) {
 
     socket.on('duel:create', async (payload: unknown, ackCb?: unknown) => {
       try {
-        const data = payload as { isPrivate?: boolean; withBot?: boolean };
+        const data = payload as { isPrivate?: boolean };
         const game = await prisma.game.findUnique({ where: { slug: 'word-duel' } });
         if (!game) return ack(ackCb, { error: 'Игра не настроена' });
-        const withBot = Boolean(data?.withBot);
 
         await prisma.gameRoom.updateMany({
           where: { hostId: userId, status: 'WAITING', gameId: game.id },
@@ -243,15 +242,8 @@ export function attachDuel(io: Server) {
             hostId: userId,
             isPrivate: Boolean(data?.isPrivate),
             maxPlayers: 2,
-            settings: { withBot },
-            participants: {
-              create: [
-                { userId },
-                ...(withBot
-                  ? [{ isBot: true, botName: 'Wordy', botAvatar: '📚' }]
-                  : []),
-              ],
-            },
+            settings: {},
+            participants: { create: [{ userId }] },
           },
         });
         socket.join(`duel:${room.code}`);
@@ -300,7 +292,7 @@ export function attachDuel(io: Server) {
         if (room.hostId !== userId) return ack(ackCb, { error: 'Начать матч может только хост' });
         if (room.status !== 'WAITING') return ack(ackCb, { error: 'Матч уже запущен' });
         if (room.participants.length < 2) {
-          return ack(ackCb, { error: 'Пригласите друга или начните матч с ботом' });
+          return ack(ackCb, { error: 'Нужен второй реальный игрок. Пригласите друга по коду' });
         }
 
         const letters = randomLetters();
@@ -337,38 +329,6 @@ export function attachDuel(io: Server) {
           where: { id: room.id },
           data: { status: 'PLAYING', startedAt: new Date(now) },
         });
-
-        const bot = [...members.values()].find((member) => member.isBot);
-        if (bot) {
-          const possible = DICTIONARY_WORDS.filter(
-            (word) => word.length >= 3 && word.length <= 7 && canBuildWord(word, letters),
-          );
-          runtime.botPlan = possible.sort(() => Math.random() - 0.5).slice(0, 9);
-          runtime.botPlan.forEach((word, index) => {
-            schedule(
-              runtime,
-              async () => {
-                if (Date.now() > runtime.endsAt) return;
-                if (bot.words.some((entry) => entry.word === word)) return;
-                const points = wordScore(word);
-                bot.score += points;
-                bot.words.push({ word, points, at: Date.now() });
-                await prisma.gameParticipant.update({
-                  where: { id: bot.participantId },
-                  data: { score: bot.score },
-                });
-                io.to(`duel:${runtime.code}`).emit('duel:word', {
-                  participantId: bot.participantId,
-                  word,
-                  points,
-                  score: bot.score,
-                  isBot: true,
-                });
-              },
-              5000 + index * 7500 + Math.random() * 3000,
-            );
-          });
-        }
 
         socket.join(`duel:${room.code}`);
         ack(ackCb, { started: true });

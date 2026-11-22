@@ -65,7 +65,7 @@ node scripts/smoke.mjs
 node scripts/ui-test.mjs
 ```
 
-Сценарии: Quiz setup → вопрос → ответ → reveal, WYR голос, Guess Image, создание поста, чат, редактирование профиля, admin users/questions. Скриншоты — в `screens/` (не коммитятся).
+Сценарии: Quiz setup → публичное лобби без ботов, WYR голос, Guess Image, создание поста, чат, редактирование профиля, admin users/questions. Полный матч Quiz Battle проверяется smoke-тестом на двух реальных клиентах. Скриншоты — в `screens/` (не коммитятся).
 
 ## 6. Миграции на чистой БД
 

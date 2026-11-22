@@ -3,14 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Bot,
   Check,
   Copy,
   Crown,
   DoorOpen,
   Lock,
   Play,
-  Plus,
   Send,
   Share2,
   Sparkles,
@@ -137,20 +135,16 @@ export function DuelPage() {
     return () => window.clearInterval(timer);
   }, [view, state?.endsAt]);
 
-  async function createRoom(withBot: boolean) {
+  async function createRoom() {
     if (!connected) {
       toast.error('Подключение к игровому серверу…');
       return;
     }
     setCreating(true);
     try {
-      const result = await emitAck<{ room: DuelRoom }>('duel:create', { withBot, isPrivate });
+      const result = await emitAck<{ room: DuelRoom }>('duel:create', { isPrivate });
       setRoom(result.room);
       setView('lobby');
-      if (withBot) {
-        setStarting(true);
-        await emitAck('duel:start', { code: result.room.code });
-      }
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -305,18 +299,15 @@ export function DuelPage() {
               <Button
                 fullWidth
                 size="lg"
-                loading={creating && starting}
-                onClick={() => createRoom(true)}
-                icon={<Bot size={18} />}
+                loading={creating}
+                onClick={createRoom}
+                icon={<Swords size={18} />}
               >
-                Матч с ботом
+                Создать дуэль
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="secondary" loading={creating && !starting} onClick={() => createRoom(false)} icon={<Plus size={15} />}>
-                  Создать с другом
-                </Button>
+              <div className="grid grid-cols-1 gap-2">
                 <Button variant="secondary" onClick={() => setShowJoin(true)} icon={<DoorOpen size={15} />}>
-                  По коду
+                  Войти по коду
                 </Button>
               </div>
               <p className="text-center text-[10px] text-muted/60">
@@ -345,7 +336,7 @@ export function DuelPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-semibold">{participant.name}</p>
                       <p className="text-[10px] text-muted">
-                        {participant.isBot ? 'AI-соперник' : participant.userId === room.hostId ? 'Хост' : 'Игрок'}
+                        {participant.userId === room.hostId ? 'Хост' : 'Игрок'}
                       </p>
                     </div>
                     {participant.userId === room.hostId && <Crown size={16} className="text-amber-300" />}

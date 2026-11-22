@@ -281,6 +281,9 @@ export interface QuizRoom {
   categoryId: string | null;
   phase?: string;
   totalQuestions?: number;
+  isPrivate?: boolean;
+  maxPlayers?: number;
+  settings?: { questionCount?: number; autoStart?: boolean };
   participants: Character[];
 }
 

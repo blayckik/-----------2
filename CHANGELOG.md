@@ -2,6 +2,41 @@
 
 Все заметные изменения проекта FUNBOX. Формат — по датам, с указанием проверок.
 
+## 2026-11-23
+
+### Added
+
+- Production seed без демо-игроков: только игры, 73 вопроса, достижения, квесты, магазин и события (`users: 0`).
+- `db:seed:prod` и destructive `db:reset:prod` для подготовки чистой production-БД.
+- Live-комнаты Quiz Battle: реальные публичные лобби, вход по кнопке, автостарт при втором игроке.
+- Runtime `/config.js`: `BOT_USERNAME`, `DEMO_AUTH_ENABLED` и `APP_URL` без пересборки Vite.
+- `amvera.yml`, `docs/AMVERA.md`: деплой приложения и managed PostgreSQL в Amvera Cloud.
+- Docker entrypoint: `SEED_ON_START` и `RUN_BOT` для production-контейнера.
+- Команда бота `/id` для настройки `ADMIN_TELEGRAM_IDS`.
+
+### Changed
+
+- Удалены все AI-соперники из Quiz Battle и Word Duel; игры требуют второго реального игрока.
+- Убран выбор ботов и кнопка «Матч с ботом» из интерфейса.
+- Demo-переключатель скрывается в production через runtime-конфиг.
+- Production seed не очищает таблицы без явного `SEED_RESET=true`.
+- README и скриншоты обновлены под игру без ботов.
+
+### Fixed
+
+- PGlite не создавал `.data/pglite` на чистой машине.
+- Vite-сборка зависела от `VITE_BOT_USERNAME`; теперь username берётся из API runtime.
+- Публичная комната не запускалась после подключения второго игрока.
+- Demo-данные больше не попадают в production.
+
+### Verified
+
+- API/web/bot typecheck — без ошибок.
+- Unit-тесты: 12/12.
+- Production seed на чистой схеме: 4 игры, 73 вопроса, 16 достижений, 13 квестов, 8 товаров, 3 события, **0 пользователей**.
+- UI-тест (production build): Quiz lobby без ботов, WYR, Guess Image, соцсеть, чат, профиль, админка — без ошибок.
+- `pnpm doctor`: 25 OK, 1 предупреждение (BOT_TOKEN в demo).
+
 ## 2026-11-13
 
 ### Added

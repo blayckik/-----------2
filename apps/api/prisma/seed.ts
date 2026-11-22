@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const prisma = new PrismaClient();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DEMO = process.env.SEED_MODE !== 'production';
 
 function levelFromXp(xp: number) {
   return Math.min(100, Math.max(1, Math.floor(Math.sqrt(xp / 50)) + 1));
@@ -384,8 +385,21 @@ const guessAnswers: Record<string, { answer: string; hints: string[]; category: 
 };
 
 async function main() {
-  console.log('🌱 Seeding FUNBOX demo database…');
-  await truncate();
+  if (DEMO) {
+    console.log('🌱 Seeding FUNBOX demo database…');
+    await truncate();
+  } else {
+    console.log('🌱 Seeding FUNBOX production content (no demo users)…');
+    if (process.env.SEED_RESET === 'true') {
+      console.log('⚠️  SEED_RESET=true — очищаем таблицы перед production seed.');
+      await truncate();
+    }
+    const existingGames = await prisma.game.count();
+    if (existingGames > 0) {
+      console.log('✅ Content already exists — production seed skipped.');
+      return;
+    }
+  }
 
   const games = new Map<string, { id: string }>();
   for (const data of gameSeeds) {
@@ -507,6 +521,21 @@ async function main() {
         difficulty: meta.category === 'landmarks' ? 'MEDIUM' : 'EASY',
       },
     });
+  }
+
+  if (!DEMO) {
+    const counts = {
+      games: await prisma.game.count(),
+      categories: await prisma.category.count(),
+      questions: await prisma.gameQuestion.count(),
+      achievements: await prisma.achievement.count(),
+      quests: await prisma.quest.count(),
+      shop: await prisma.shopItem.count(),
+      events: await prisma.platformEvent.count(),
+      users: await prisma.user.count(),
+    };
+    console.log('✅ Production content seeded:', counts);
+    return;
   }
 
   const users = new Map<string, { id: string; username: string; firstName: string }>();

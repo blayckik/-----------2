@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 
-const base = 'http://localhost:5173';
+const base = process.env.BASE_URL || 'http://localhost:5173';
 const out = 'screens';
 await fs.mkdir(out, { recursive: true });
 const browser = await puppeteer.launch({
@@ -51,31 +51,16 @@ await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' });
 await waitText('Нова', 30000);
 await wait(1500);
 
-// ── Quiz quick match ───────────────────────────────────────
+// ── Quiz lobby without bots ────────────────────────────────
 await page.goto(`${base}/games/quiz`, { waitUntil: 'domcontentloaded' });
-await waitText('Быстрый матч');
+await waitText('Создать комнату');
 await wait(700);
 await shot('quiz-setup');
-await clickText('Быстрый матч');
-await waitText('Табло', 30000);
-await wait(800);
-await shot('quiz-question');
-const answered = await page.evaluate(() => {
-  const option = [...document.querySelectorAll('button')].find(
-    (element) =>
-      element.offsetParent !== null &&
-      element.className.includes('p-3.5') &&
-      element.textContent?.trim().startsWith('A'),
-  );
-  if (!option) return false;
-  option.click();
-  return true;
-});
-console.log('quiz option clicked', answered);
-await wait(2000);
-await shot('quiz-answered');
-await wait(3800);
-await shot('quiz-reveal');
+await clickText('Создать комнату');
+await waitText('Лобби готово', 30000);
+await wait(500);
+await shot('quiz-lobby');
+console.log('quiz lobby created without bots');
 
 // ── Would You Rather ───────────────────────────────────────
 await page.goto(`${base}/games/wyr`, { waitUntil: 'domcontentloaded' });

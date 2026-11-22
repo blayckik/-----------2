@@ -62,7 +62,7 @@ jobs:
           echo "BOT_USERNAME=${USERNAME}" >> "$GITHUB_ENV"
           curl -fsS -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands" \
             -H 'Content-Type: application/json' \
-            -d '{"commands":[{"command":"start","description":"Открыть FUNBOX"},{"command":"profile","description":"Мой профиль"},{"command":"games","description":"Игры"},{"command":"rating","description":"Рейтинг"},{"command":"daily","description":"Ежедневная награда"},{"command":"settings","description":"Настройки"},{"command":"help","description":"Помощь"}]}' > /dev/null
+            -d '{"commands":[{"command":"start","description":"Открыть FUNBOX"},{"command":"profile","description":"Мой профиль"},{"command":"games","description":"Игры"},{"command":"rating","description":"Рейтинг"},{"command":"daily","description":"Ежедневная награда"},{"command":"settings","description":"Настройки"},{"command":"id","description":"Мой Telegram ID"},{"command":"help","description":"Помощь"}]}' > /dev/null
           curl -fsS -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setChatMenuButton" \
             -H 'Content-Type: application/json' \
             -d "{\"menu_button\":{\"type\":\"web_app\",\"text\":\"FUNBOX\",\"web_app\":{\"url\":\"${WEBAPP_URL}\"}}}" > /dev/null || true
