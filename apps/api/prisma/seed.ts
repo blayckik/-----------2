@@ -388,6 +388,36 @@ const guessAnswers: Record<string, { answer: string; hints: string[]; category: 
   lighthouse: { answer: 'Маяк', hints: ['Стоит на берегу', 'Помогает кораблям', 'Испускает световой сигнал'], category: 'nature' },
 };
 
+async function repairGuessImageQuestions() {
+  const game = await prisma.game.findUnique({ where: { slug: 'guess-image' } });
+  if (!game) return 0;
+  const existing = await prisma.gameQuestion.count({ where: { gameId: game.id } });
+  if (existing > 0) return 0;
+  let created = 0;
+  for (const [slug, meta] of Object.entries(guessAnswers)) {
+    const url = imageUrl(slug);
+    if (!url) {
+      console.warn(`  ! image missing: ${slug}`);
+      continue;
+    }
+    const category = await prisma.category.findUnique({ where: { slug: meta.category } });
+    await prisma.gameQuestion.create({
+      data: {
+        gameId: game.id,
+        categoryId: category?.id,
+        prompt: 'Что изображено на фотографии?',
+        options: meta.hints as Prisma.InputJsonValue,
+        answerText: meta.answer,
+        hint: meta.hints[0],
+        mediaUrl: url,
+        difficulty: meta.category === 'landmarks' ? 'MEDIUM' : 'EASY',
+      },
+    });
+    created += 1;
+  }
+  return created;
+}
+
 async function main() {
   if (DEMO) {
     console.log('🌱 Seeding FUNBOX demo database…');
@@ -400,7 +430,12 @@ async function main() {
     }
     const existingGames = await prisma.game.count();
     if (existingGames > 0) {
-      console.log('✅ Content already exists — production seed skipped.');
+      const repaired = await repairGuessImageQuestions();
+      if (repaired > 0) {
+        console.log(`✅ Repaired Guess the Image: ${repaired} questions added.`);
+      } else {
+        console.log('✅ Content already exists — production seed skipped.');
+      }
       return;
     }
   }
