@@ -16,3 +16,4 @@ screens/
 .vscode/
 .idea/
 apps/web/.vite/
+tools/

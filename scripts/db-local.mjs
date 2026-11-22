@@ -1,5 +1,6 @@
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -13,6 +14,7 @@ const dataDir = path.resolve('.data/pglite');
 const port = Number(process.env.LOCAL_PG_PORT || 5433);
 
 console.log(`Loading PGlite (PostgreSQL) from ${dataDir}…`);
+mkdirSync(dataDir, { recursive: true });
 const db = await PGlite.create({ dataDir });
 
 const server = new PGLiteSocketServer({
