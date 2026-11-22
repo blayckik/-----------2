@@ -56,6 +56,17 @@ API-контейнер при старте выполняет `prisma migrate de
 
 `initData` проверяется на сервере. Если API отвечает `BOT_NOT_CONFIGURED`, проверьте `BOT_TOKEN` именно в контейнере API.
 
+### Временный запуск бота из GitHub Actions
+
+Если сеть разработчика блокирует `api.telegram.org`, но публичный HTTPS-туннель уже работает, бота можно временно запустить из Actions:
+
+1. Добавить `BOT_TOKEN` и `BOT_SECRET` в **Settings → Secrets and variables → Actions**.
+2. Открыть **Actions → Telegram Bot (temporary runner) → Run workflow**.
+3. Указать `public_url` — HTTPS-адрес API/Mini App.
+4. Бот зарегистрирует команды и `web_app` menu button, затем будет работать до указанного таймаута.
+
+Это **не production**: job ограничен по времени, зависит от туннеля и не заменяет постоянный сервер. Для боевого запуска используйте Docker Compose на машине с доступом к Telegram.
+
 ## 4. Reverse proxy
 
 Compose публикует API на `127.0.0.1:4000` (или `API_PORT`). Наружу — только TLS proxy.
