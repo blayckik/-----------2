@@ -325,7 +325,7 @@ export function WalletPage() {
                       className="rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase"
                       style={{ background: `${rarityColor[item.rarity]}18`, color: rarityColor[item.rarity] }}
                     >
-                      {rarityLabel[item.rarity]}
+                      {item.rarity === 'LEGENDARY' ? 'EXCLUSIVE' : rarityLabel[item.rarity]}
                     </span>
                   </div>
                   <h3 className="mt-2 text-xs font-bold text-primary">{item.name}</h3>

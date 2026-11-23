@@ -145,6 +145,12 @@ export function ProfilePage() {
   const frameItem = cosmetics.find((entry) => entry.item.type === 'AVATAR');
   const badgeItem = cosmetics.find((entry) => entry.item.type === 'BADGE');
   const titleItem = cosmetics.find((entry) => entry.item.type === 'TITLE');
+  const frameGradient =
+    frameItem?.item.code === 'exclusive-inferno-frame'
+      ? 'bg-gradient-to-br from-amber-300 via-orange-500 to-rose-700'
+      : frameItem?.item.code === 'exclusive-aurora-frame'
+        ? 'bg-gradient-to-br from-emerald-300 via-cyan-400 to-violet-500'
+        : 'bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400';
 
   const follow = useMutation({
     mutationFn: async () => {
@@ -280,7 +286,7 @@ export function ProfilePage() {
               className={cn(
                 'rounded-full',
                 frameItem
-                  ? 'bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 p-[3px] shadow-[0_0_28px_-6px_rgba(168,85,247,.8)]'
+                  ? `${frameGradient} p-[3px] shadow-[0_0_28px_-6px_rgba(168,85,247,.8)]`
                   : '',
               )}
             >

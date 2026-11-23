@@ -6,6 +6,7 @@ import { prisma } from './lib/prisma.js';
 import { setIO } from './lib/io.js';
 import { initSockets } from './sockets/index.js';
 import { ensureGameCatalog } from './services/gameCatalog.js';
+import { ensureShopCatalog } from './services/shopCatalog.js';
 
 const app = createApp();
 const server = http.createServer(app);
@@ -27,6 +28,7 @@ initSockets(io);
 async function start() {
   try {
     await ensureGameCatalog();
+    await ensureShopCatalog();
   } catch (error) {
     console.error('[game-catalog]', error);
   }

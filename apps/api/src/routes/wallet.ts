@@ -12,7 +12,7 @@ const CASES = [
     code: 'starter',
     name: 'FUN Стартер',
     description: 'Шанс на монеты, опыт или предмет из магазина.',
-    price: 150,
+    price: 100,
     icon: '🎁',
     accent: '#8b5cf6',
   },

@@ -15,6 +15,7 @@ import { WyrPage } from './pages/WyrPage';
 import { ImageGamePage } from './pages/ImageGamePage';
 import { MiniGamePage } from './pages/MiniGamePage';
 import { MathSprintPage, NumberGuessPage } from './pages/SoloGamesPage';
+import { ArcadeSoloPage } from './pages/ArcadeSoloPage';
 import { SocialPage } from './pages/SocialPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ChatPage } from './pages/ChatPage';
@@ -82,6 +83,9 @@ export function App() {
         <Route path="games/minefield" element={<MiniGamePage slug="minefield" />} />
         <Route path="games/math-sprint" element={<MathSprintPage />} />
         <Route path="games/number-guess" element={<NumberGuessPage />} />
+        <Route path="games/memory" element={<ArcadeSoloPage game="memory" />} />
+        <Route path="games/reaction" element={<ArcadeSoloPage game="reaction" />} />
+        <Route path="games/odd-one-out" element={<ArcadeSoloPage game="odd-one-out" />} />
         <Route path="social" element={<SocialPage />} />
         <Route path="friends" element={<FriendsPage />} />
         <Route path="chat" element={<ChatPage />} />
@@ -183,6 +187,9 @@ function JoinRedirect() {
       minefield: '/games/minefield',
       'math-sprint': '/games/math-sprint',
       'number-guess': '/games/number-guess',
+      memory: '/games/memory',
+      reaction: '/games/reaction',
+      'odd-one-out': '/games/odd-one-out',
     };
     navigate(`${routes[slug ?? ''] ?? '/games/quiz'}?code=${data.code}`, { replace: true });
   }, [data, navigate]);

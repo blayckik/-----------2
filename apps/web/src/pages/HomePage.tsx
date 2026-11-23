@@ -276,6 +276,9 @@ export function HomePage() {
                   minefield: '/games/minefield',
                   'math-sprint': '/games/math-sprint',
                   'number-guess': '/games/number-guess',
+                  memory: '/games/memory',
+                  reaction: '/games/reaction',
+                  'odd-one-out': '/games/odd-one-out',
                 };
                 navigate(paths[game.slug] ?? '/games');
               }}

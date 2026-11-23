@@ -354,6 +354,105 @@ router.patch(
   }),
 );
 
+router.get(
+  '/users/:id/rewards',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const [user, achievements, purchases] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, xp: true, level: true, coins: true },
+      }),
+      prisma.userAchievement.findMany({
+        where: { userId: req.params.id },
+        include: { achievement: true },
+        orderBy: { unlockedAt: 'desc' },
+      }),
+      prisma.purchase.findMany({
+        where: { userId: req.params.id },
+        include: { item: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    if (!user) return notFound('Пользователь не найден');
+    return ok(res, { user, achievements, purchases });
+  }),
+);
+
+router.post(
+  '/users/:id/achievements',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const body = z.object({ achievementId: z.string(), grant: z.boolean() }).parse(req.body);
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return notFound('Пользователь не найден');
+    if (body.grant) {
+      await prisma.userAchievement.upsert({
+        where: { userId_achievementId: { userId: target.id, achievementId: body.achievementId } },
+        update: {},
+        create: { userId: target.id, achievementId: body.achievementId },
+      });
+    } else {
+      await prisma.userAchievement.deleteMany({
+        where: { userId: target.id, achievementId: body.achievementId },
+      });
+    }
+    return ok(res, { updated: true });
+  }),
+);
+
+router.post(
+  '/users/:id/purchases',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const body = z.object({ itemId: z.string(), grant: z.boolean() }).parse(req.body);
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return notFound('Пользователь не найден');
+    if (body.grant) {
+      await prisma.purchase.upsert({
+        where: { userId_itemId: { userId: target.id, itemId: body.itemId } },
+        update: {},
+        create: { userId: target.id, itemId: body.itemId, price: 0 },
+      });
+    } else {
+      await prisma.purchase.deleteMany({ where: { userId: target.id, itemId: body.itemId } });
+    }
+    return ok(res, { updated: true });
+  }),
+);
+
+router.post(
+  '/users/:id/reset',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const body = z.object({ confirm: z.literal(true) }).parse(req.body);
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return notFound('Пользователь не найден');
+    if (target.role === 'ADMIN' && target.id !== req.auth!.id) {
+      throw badRequest('Нельзя сбрасывать профиль другого администратора');
+    }
+    await prisma.$transaction(async (tx) => {
+      await Promise.all([
+        tx.userAchievement.deleteMany({ where: { userId: target.id } }),
+        tx.purchase.deleteMany({ where: { userId: target.id } }),
+        tx.gameResult.deleteMany({ where: { userId: target.id } }),
+        tx.transaction.deleteMany({ where: { userId: target.id } }),
+        tx.userStat.deleteMany({ where: { userId: target.id } }),
+      ]);
+      await tx.user.update({
+        where: { id: target.id },
+        data: { xp: 0, level: 1, coins: 0 },
+      });
+      await tx.wallet.upsert({
+        where: { userId: target.id },
+        update: { totalEarned: 0, totalSpent: 0 },
+        create: { userId: target.id },
+      });
+    });
+    return ok(res, { reset: true });
+  }),
+);
+
 router.post(
   '/users/:id/balance',
   requireAdmin,

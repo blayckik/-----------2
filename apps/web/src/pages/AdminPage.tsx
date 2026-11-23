@@ -563,6 +563,40 @@ function ProfileEditor({ user, onClose, onSaved }: { user: AdminUser; onClose: (
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 
+  const { data: rewards, refetch: refetchRewards } = useAdminQuery<{
+    achievements: Array<{ id: string; achievement: { id: string; name: string; icon: string } }>;
+    purchases: Array<{ id: string; item: { id: string; name: string; icon: string } }>;
+  }>(['admin', 'user-rewards', user.id], `/admin/users/${user.id}/rewards`);
+  const { data: allAchievements } = useAdminQuery<Array<{ id: string; name: string; icon: string }>>(
+    ['admin', 'achievements'],
+    '/admin/achievements',
+  );
+  const { data: allItems } = useAdminQuery<Array<{ id: string; name: string; icon: string }>>(
+    ['admin', 'shop'],
+    '/admin/shop',
+  );
+
+  const grantAchievement = useMutation({
+    mutationFn: async (params: { id: string; grant: boolean }) =>
+      api.post(`/admin/users/${user.id}/achievements`, { achievementId: params.id, grant: params.grant }),
+    onSuccess: () => void refetchRewards(),
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+  const grantItem = useMutation({
+    mutationFn: async (params: { id: string; grant: boolean }) =>
+      api.post(`/admin/users/${user.id}/purchases`, { itemId: params.id, grant: params.grant }),
+    onSuccess: () => void refetchRewards(),
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+  const resetProfile = useMutation({
+    mutationFn: async () => api.post(`/admin/users/${user.id}/reset`, { confirm: true }),
+    onSuccess: () => {
+      toast.success('Профиль сброшен: награды, покупки, XP и монеты');
+      onSaved();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
   return (
     <Modal
       open
@@ -611,6 +645,63 @@ function ProfileEditor({ user, onClose, onSaved }: { user: AdminUser; onClose: (
           <Input label="Страна" value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} />
         </div>
         <Input label="Баннер URL" value={form.bannerUrl} onChange={(event) => setForm({ ...form, bannerUrl: event.target.value })} />
+
+        <div className="rounded-2xl border border-line p-3">
+          <p className="text-[11px] font-bold text-primary">Награды</p>
+          <div className="mt-2 max-h-40 space-y-1 overflow-y-auto">
+            {allAchievements?.map((achievement) => {
+              const owned = rewards?.achievements.some((entry) => entry.achievement.id === achievement.id);
+              return (
+                <div key={achievement.id} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2 py-1.5">
+                  <span>{achievement.icon}</span>
+                  <span className="min-w-0 flex-1 truncate text-[10px]">{achievement.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => grantAchievement.mutate({ id: achievement.id, grant: !owned })}
+                    className={cn('rounded-lg px-2 py-1 text-[9px] font-semibold', owned ? 'bg-rose-500/15 text-rose-300' : 'bg-violet-500/15 text-violet-300')}
+                  >
+                    {owned ? 'Убрать' : 'Выдать'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-line p-3">
+          <p className="text-[11px] font-bold text-primary">Покупки и косметика</p>
+          <div className="mt-2 max-h-40 space-y-1 overflow-y-auto">
+            {allItems?.map((item) => {
+              const owned = rewards?.purchases.some((entry) => entry.item.id === item.id);
+              return (
+                <div key={item.id} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2 py-1.5">
+                  <span>{item.icon}</span>
+                  <span className="min-w-0 flex-1 truncate text-[10px]">{item.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => grantItem.mutate({ id: item.id, grant: !owned })}
+                    className={cn('rounded-lg px-2 py-1 text-[9px] font-semibold', owned ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300')}
+                  >
+                    {owned ? 'Убрать' : 'Выдать'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <Button
+          variant="danger"
+          fullWidth
+          loading={resetProfile.isPending}
+          onClick={() => {
+            if (window.confirm('Сбросить профиль: XP, уровень, монеты, все награды, покупки и историю игр?')) {
+              resetProfile.mutate();
+            }
+          }}
+        >
+          Сбросить профиль полностью
+        </Button>
       </div>
     </Modal>
   );

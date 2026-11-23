@@ -38,6 +38,15 @@ interface NumberSession {
 
 const numberSessions = new Map<string, NumberSession>();
 
+interface QuickSession {
+  id: string;
+  userId: string;
+  game: string;
+  startedAt: number;
+}
+
+const quickSessions = new Map<string, QuickSession>();
+
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -233,6 +242,64 @@ router.post(
       xp,
       coins,
     });
+  }),
+);
+
+router.post(
+  '/quick/start',
+  asyncHandler(async (req, res) => {
+    const body = z.object({ game: z.enum(['memory', 'reaction', 'odd-one-out']) }).parse(req.body);
+    const session: QuickSession = {
+      id: randomUUID(),
+      userId: req.auth!.id,
+      game: body.game,
+      startedAt: Date.now(),
+    };
+    quickSessions.set(session.id, session);
+    return ok(res, { sessionId: session.id, game: session.game });
+  }),
+);
+
+router.post(
+  '/quick/finish',
+  asyncHandler(async (req, res) => {
+    const body = z
+      .object({
+        sessionId: z.string(),
+        score: z.number().int().min(0).max(3000),
+        details: z.record(z.unknown()).optional(),
+      })
+      .parse(req.body);
+    const session = quickSessions.get(body.sessionId);
+    if (!session || session.userId !== req.auth!.id) return notFound('Игровая сессия не найдена');
+    quickSessions.delete(session.id);
+    const game = await prisma.game.findUnique({ where: { slug: session.game } });
+    if (!game) throw badRequest('Игра временно недоступна');
+    const xp = 15 + Math.round(body.score / 20);
+    const coins = 5 + Math.round(body.score / 50);
+    await prisma.gameResult.create({
+      data: {
+        userId: req.auth!.id,
+        gameId: game.id,
+        outcome: body.score >= 1000 ? 'WIN' : body.score >= 400 ? 'DRAW' : 'LOSS',
+        score: body.score,
+        xpEarned: xp,
+        coinsEarned: coins,
+        details: { game: session.game, ...body.details } as never,
+      },
+    });
+    await awardRewards({
+      userId: req.auth!.id,
+      xp,
+      coins,
+      type: 'GAME',
+      description: game.title,
+      reference: `solo:quick:${session.id}`,
+      metadata: { score: body.score, game: session.game },
+    });
+    await trackMetric(req.auth!.id, 'GAMES_PLAYED', 1);
+    if (body.score >= 1000) await trackMetric(req.auth!.id, 'GAMES_WON', 1);
+    return ok(res, { score: body.score, xp, coins });
   }),
 );
 
