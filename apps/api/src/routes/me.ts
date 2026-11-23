@@ -186,6 +186,10 @@ router.get(
           orderBy: { unlockedAt: 'desc' },
           take: 24,
         },
+        purchases: {
+          include: { item: true },
+          orderBy: { createdAt: 'desc' },
+        },
         posts: {
           where: { isDeleted: false },
           orderBy: { createdAt: 'desc' },

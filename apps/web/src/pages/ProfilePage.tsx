@@ -65,6 +65,19 @@ interface ProfileData extends UserCard {
   };
   stats: UserStats;
   achievements: Array<{ id: string; unlockedAt: string; achievement: Achievement }>;
+  purchases: Array<{
+    id: string;
+    createdAt: string;
+    item: {
+      id: string;
+      code: string;
+      name: string;
+      description: string;
+      icon: string;
+      type: string;
+      rarity: Achievement['rarity'];
+    };
+  }>;
   posts: Post[];
   relationship: {
     isSelf: boolean;
@@ -128,6 +141,10 @@ export function ProfilePage() {
   });
 
   const isSelf = data?.relationship.isSelf ?? !id;
+  const cosmetics = data?.purchases ?? [];
+  const frameItem = cosmetics.find((entry) => entry.item.type === 'AVATAR');
+  const badgeItem = cosmetics.find((entry) => entry.item.type === 'BADGE');
+  const titleItem = cosmetics.find((entry) => entry.item.type === 'TITLE');
 
   const follow = useMutation({
     mutationFn: async () => {
@@ -259,7 +276,24 @@ export function ProfilePage() {
       <div className="relative z-10 -mt-12 px-4">
         <div className="flex items-end justify-between">
           <div className="relative">
-            <Avatar user={data} size={92} ring />
+            <div
+              className={cn(
+                'rounded-full',
+                frameItem
+                  ? 'bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 p-[3px] shadow-[0_0_28px_-6px_rgba(168,85,247,.8)]'
+                  : '',
+              )}
+            >
+              <Avatar user={data} size={frameItem ? 86 : 92} ring={!frameItem} />
+            </div>
+            {badgeItem && (
+              <span
+                className="absolute -bottom-1 -left-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-app bg-gradient-to-br from-amber-300 to-orange-500 text-base shadow-lg"
+                title={badgeItem.item.name}
+              >
+                {badgeItem.item.icon}
+              </span>
+            )}
             {data.role !== 'USER' && (
               <span className="absolute -right-2 top-0 flex h-8 w-8 items-center justify-center rounded-full border border-app bg-gradient-to-br from-amber-300 to-orange-500 text-amber-950 shadow-lg">
                 {data.role === 'ADMIN' ? <Shield size={15} /> : <ShieldAlert size={15} />}
@@ -300,6 +334,7 @@ export function ProfilePage() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-[22px] font-semibold leading-tight">{userName(data)}</h1>
             {data.relationship.isFriend && <Badge tone="emerald"><UserCheck size={10} /> друг</Badge>}
+            {titleItem && <Badge tone="amber">{titleItem.item.icon} {titleItem.item.name}</Badge>}
             <Badge tone="violet">Ур. {data.level}</Badge>
           </div>
           {data.username && <p className="mt-0.5 text-xs text-muted">@{data.username}</p>}
@@ -384,6 +419,54 @@ export function ProfilePage() {
             </div>
           </section>
         )}
+
+        {cosmetics.length > 0 && (
+          <section className="mt-6">
+            <SectionHeader
+              title="Косметика"
+              subtitle={`${cosmetics.length} предметов коллекции`}
+              action={
+                isSelf ? (
+                  <Link to="/wallet" className="text-[11px] font-semibold text-violet-300">
+                    Магазин
+                  </Link>
+                ) : undefined
+              }
+            />
+            <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+              {cosmetics.map((entry) => {
+                const active =
+                  (entry.item.type === 'AVATAR' && frameItem?.id === entry.id) ||
+                  (entry.item.type === 'BADGE' && badgeItem?.id === entry.id) ||
+                  (entry.item.type === 'TITLE' && titleItem?.id === entry.id);
+                return (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      'relative flex w-[116px] shrink-0 flex-col items-center rounded-2xl border p-3 text-center',
+                      active ? 'border-violet-400/50 bg-violet-500/10' : 'border-line bg-surface/60',
+                    )}
+                  >
+                    <span
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl"
+                      style={{
+                        background: `${rarityColor[entry.item.rarity]}22`,
+                        border: `1px solid ${rarityColor[entry.item.rarity]}44`,
+                      }}
+                    >
+                      {entry.item.icon}
+                    </span>
+                    <p className="mt-2 line-clamp-2 text-[10px] font-bold leading-tight text-primary">{entry.item.name}</p>
+                    <span className="mt-1 text-[8px]" style={{ color: rarityColor[entry.item.rarity] }}>
+                      {active ? 'Надето' : rarityLabel[entry.item.rarity]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
 
         {!data.profile?.hideFriends && data.friends.length > 0 && (
           <section className="mt-6">

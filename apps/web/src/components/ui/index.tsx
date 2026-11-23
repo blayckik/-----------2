@@ -530,14 +530,15 @@ export function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative h-6 w-11 shrink-0 rounded-full border transition',
+          'relative h-6 w-11 shrink-0 overflow-hidden rounded-full border transition-colors',
           checked ? 'border-violet-400/40 bg-violet-500' : 'border-line bg-white/10',
         )}
       >
-        <motion.span
-          animate={{ x: checked ? 20 : 2 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-          className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow"
+        <span
+          className={cn(
+            'absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow transition-transform duration-200',
+            checked ? 'translate-x-5' : 'translate-x-0',
+          )}
         />
       </button>
     </div>

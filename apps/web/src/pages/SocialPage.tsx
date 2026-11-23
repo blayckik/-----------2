@@ -466,11 +466,13 @@ export function SocialPage() {
 
       <Modal open={Boolean(menuPost)} onClose={() => setMenuPost(null)} title="Действия">
         <div className="space-y-1.5 pb-2">
-          <ActionRow
-            icon={<Repeat2 size={16} />}
-            label="Поделиться"
-            onClick={() => menuPost && repost.mutate(menuPost)}
-          />
+          {menuPost && menuPost.author.id !== me?.id && (
+            <ActionRow
+              icon={<Repeat2 size={16} />}
+              label="Поделиться"
+              onClick={() => menuPost && repost.mutate(menuPost)}
+            />
+          )}
           <ActionRow
             icon={<Share2 size={16} />}
             label="Отправить в Telegram"
@@ -559,6 +561,7 @@ function PostCard({
   onRepost: () => void;
 }) {
   const [imageOpen, setImageOpen] = useState(false);
+  const isOwn = post.author.id === currentUserId;
   return (
     <>
       <Card className="overflow-hidden">
@@ -642,14 +645,16 @@ function PostCard({
             <MessageCircle size={16} />
             {formatNumber(post.commentCount)}
           </button>
-          <button
-            type="button"
-            onClick={onRepost}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-semibold text-muted transition hover:text-emerald-300"
-          >
-            <Repeat2 size={16} />
-            {formatNumber(post.repostCount)}
-          </button>
+          {!isOwn && (
+            <button
+              type="button"
+              onClick={onRepost}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-semibold text-muted transition hover:text-emerald-300"
+            >
+              <Repeat2 size={16} />
+              {formatNumber(post.repostCount)}
+            </button>
+          )}
         </div>
       </Card>
 

@@ -249,6 +249,7 @@ router.post(
       include: { author: { select: { username: true, firstName: true } } },
     });
     if (!post || post.isDeleted) return notFound('Публикация не найдена');
+    if (post.authorId === userId) throw badRequest('Нельзя репостить собственную публикацию');
 
     const existing = await prisma.post.findFirst({
       where: { repostOfId: post.id, authorId: userId, isDeleted: false },
