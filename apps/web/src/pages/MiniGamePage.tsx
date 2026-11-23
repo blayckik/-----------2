@@ -15,6 +15,7 @@ import {
   Sparkles,
   Timer,
   Trophy,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react';
@@ -25,7 +26,7 @@ import { useToast } from '../context/ToastContext';
 import { haptic, shareInvite } from '../lib/telegram';
 import { cn, formatNumber } from '../lib/utils';
 import type { Game } from '../types';
-import { Badge, Button, Card, Input, Spinner } from '../components/ui';
+import { Badge, Button, Card, Input, Modal, Spinner } from '../components/ui';
 
 type Slug = 'word-bomb' | 'bluff-trivia' | 'converge' | 'auction' | 'minefield';
 
@@ -228,6 +229,7 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
   const [joinCode, setJoinCode] = useState(codeFromUrl);
   const [busy, setBusy] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteInfo, setInviteInfo] = useState<{ link: string; code: string; sent: number } | null>(null);
   const autoJoinRef = useRef(false);
 
   const now = useNow(Boolean(room && room.phase !== 'lobby'));
@@ -383,6 +385,19 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     if (!room) return;
     haptic('light');
     shareInvite(roomLink(), `Играем в ${config.title} в FUNBOX. Комната ${room.code}`);
+  }
+
+  async function inviteFriends() {
+    if (!room) return;
+    try {
+      const result = await api.post(`/games/room/${room.code}/invite`);
+      const info = result.data.data as { link: string; code: string; sent: number };
+      setInviteInfo(info);
+      if (info.sent === 0) toast.info('Ссылка готова — отправь её другу');
+      else toast.success(`Приглашение отправлено ${info.sent} друзьям`);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   if (!connected) {
@@ -567,13 +582,22 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
         </Card>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => void copyInvite()} icon={inviteCopied ? <Check size={14} /> : <Copy size={14} />}>
-            {inviteCopied ? 'Скопировано' : 'Ссылка'}
+          <Button variant="secondary" onClick={() => void inviteFriends()} icon={<UserPlus size={14} />}>
+            Пригласить
           </Button>
           <Button variant="secondary" onClick={shareRoom} icon={<Share2 size={14} />}>
             Поделиться
           </Button>
         </div>
+        <Button
+          variant="secondary"
+          className="mt-2"
+          fullWidth
+          onClick={() => void copyInvite()}
+          icon={inviteCopied ? <Check size={14} /> : <Copy size={14} />}
+        >
+          {inviteCopied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
+        </Button>
         <Button
           className="mt-2"
           fullWidth
@@ -585,6 +609,7 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
           {isHost ? 'Начать игру' : 'Ждём хоста'}
         </Button>
         <p className="mt-3 text-center text-[10px] text-muted">{config.rules}</p>
+        <InviteModal info={inviteInfo} onClose={() => setInviteInfo(null)} toast={toast} />
       </div>
     );
   }
@@ -823,6 +848,10 @@ function BluffBoard({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [voted, setVoted] = useState<string | null>(null);
+  useEffect(() => {
+    setVoted(null);
+    setText('');
+  }, [room.round]);
   const submitLabel = room.phase === 'input' ? 'Придумать' : 'Голосовать';
 
   async function submit() {
@@ -1109,6 +1138,49 @@ function MineBoard({
         Безопасных осталось: {room.safeLeft ?? '—'} · мины скрыты сервером
       </p>
     </div>
+  );
+}
+
+function InviteModal({
+  info,
+  onClose,
+  toast,
+}: {
+  info: { link: string; code: string; sent: number } | null;
+  onClose: () => void;
+  toast: { success: (message: string) => void };
+}) {
+  return (
+    <Modal open={Boolean(info)} onClose={onClose} title="Приглашение в игру">
+      <div className="space-y-4 pb-2">
+        <p className="text-xs leading-relaxed text-muted">
+          Приглашение отправлено друзьям в уведомления. Ссылку можно скопировать или переслать в Telegram.
+        </p>
+        <div className="break-all rounded-2xl border border-line bg-black/20 p-3 text-[11px] text-primary">
+          {info?.link}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="secondary"
+            icon={<Copy size={15} />}
+            onClick={() => {
+              void navigator.clipboard?.writeText(info?.link ?? '');
+              toast.success('Ссылка скопирована');
+            }}
+          >
+            Копировать
+          </Button>
+          <Button
+            icon={<Share2 size={15} />}
+            onClick={() => {
+              if (info) shareInvite(info.link, `Присоединяйся к игре в FUNBOX. Комната ${info.code}`);
+            }}
+          >
+            Поделиться
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
