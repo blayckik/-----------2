@@ -72,13 +72,21 @@ export function GamesPage() {
     refetchInterval: 20_000,
   });
 
-  const join = (roomCode: string) => {
+  const join = async (roomCode: string) => {
     if (roomCode.trim().length < 4) {
       toast.error('Введите код комнаты');
       return;
     }
-    haptic('selection');
-    navigate(`/games/quiz?code=${roomCode.trim().toUpperCase()}`);
+    const code = roomCode.trim().toUpperCase();
+    try {
+      const response = await api.get(`/games/room/${code}`);
+      const room = response.data.data as { game?: { slug?: string } };
+      const slug = room.game?.slug;
+      haptic('selection');
+      navigate(`${gamePaths[slug ?? 'quiz-battle'] ?? '/games/quiz'}?code=${code}`);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   if (isLoading) {

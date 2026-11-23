@@ -171,8 +171,15 @@ function JoinRedirect() {
   useEffect(() => {
     if (!data) return;
     const slug = data.game?.slug;
-    if (slug === 'word-duel') navigate(`/games/word-duel?code=${data.code}`, { replace: true });
-    else navigate(`/games/quiz?code=${data.code}`, { replace: true });
+    const routes: Record<string, string> = {
+      'word-duel': '/games/word-duel',
+      'word-bomb': '/games/word-bomb',
+      'bluff-trivia': '/games/bluff-trivia',
+      converge: '/games/converge',
+      auction: '/games/auction',
+      minefield: '/games/minefield',
+    };
+    navigate(`${routes[slug ?? ''] ?? '/games/quiz'}?code=${data.code}`, { replace: true });
   }, [data, navigate]);
 
   return (

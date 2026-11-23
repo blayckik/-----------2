@@ -754,7 +754,7 @@ function bluffState(runtime: BluffRuntime) {
           authorName: option.authorId
             ? [...runtime.members.values()].find((member) => member.userId === option.authorId)?.name ?? 'Игрок'
             : null,
-          correct: option.id === 'correct',
+          correct: option.authorId === null,
         })),
       },
     };
@@ -778,9 +778,9 @@ function bluffBeginVoting(runtime: BluffRuntime, io: Server) {
   clearTimers(runtime);
   runtime.phase = 'voting';
   const options: BluffOption[] = [
-    { id: 'correct', text: runtime.fact.answer, authorId: null },
-    ...[...runtime.fakeAnswers.entries()].map(([userId, text]) => ({
-      id: `fake:${userId}`,
+    { id: `opt-${randomInt(100000, 999999)}`, text: runtime.fact.answer, authorId: null },
+    ...shuffle([...runtime.fakeAnswers.entries()]).map(([userId, text], index) => ({
+      id: `opt-${index}-${randomInt(100000, 999999)}`,
       text,
       authorId: userId,
     })),
@@ -802,7 +802,7 @@ function bluffReveal(runtime: BluffRuntime, io: Server) {
   for (const [voterId, optionId] of runtime.votes) {
     const option = runtime.options.find((entry) => entry.id === optionId);
     if (!option) continue;
-    if (option.id === 'correct') {
+    if (option.authorId === null) {
       deltas.set(voterId, (deltas.get(voterId) ?? 0) + 1000);
     } else if (option.authorId) {
       deltas.set(option.authorId, (deltas.get(option.authorId) ?? 0) + 500);
