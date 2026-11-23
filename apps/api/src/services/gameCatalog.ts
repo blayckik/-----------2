@@ -1,0 +1,82 @@
+import { prisma } from '../lib/prisma.js';
+
+export const GAME_CATALOG = [
+  {
+    slug: 'word-bomb',
+    title: 'Словесная бомба',
+    subtitle: 'Слова на время',
+    description: 'Слог на экране, бомба в руках. Назови слово быстрее всех и не подорвись.',
+    icon: '💣',
+    gradient: 'linear-gradient(135deg,#f97316 0%,#ef4444 55%,#991b1b 100%)',
+    minPlayers: 2,
+    maxPlayers: 8,
+    sortOrder: 9,
+  },
+  {
+    slug: 'bluff-trivia',
+    title: 'Блеф-викторина',
+    subtitle: 'Придумай правду',
+    description: 'Придумай убедительный ответ, обмани друзей и угадай настоящий факт.',
+    icon: '🎭',
+    gradient: 'linear-gradient(135deg,#7c3aed 0%,#c026d3 55%,#db2777 100%)',
+    minPlayers: 3,
+    maxPlayers: 8,
+    sortOrder: 10,
+  },
+  {
+    slug: 'converge',
+    title: 'На одной волне',
+    subtitle: 'Ассоциации на двоих',
+    description: 'Два слова, одна ассоциация. Сойдитесь с другом за 10 раундов.',
+    icon: '🧠',
+    gradient: 'linear-gradient(135deg,#0891b2 0%,#0d9488 55%,#65a30d 100%)',
+    minPlayers: 2,
+    maxPlayers: 2,
+    sortOrder: 11,
+  },
+  {
+    slug: 'auction',
+    title: 'Аукцион',
+    subtitle: 'Ближе к цели',
+    description: 'Числовой вопрос, 15 секунд и правило: не перебей правильный ответ.',
+    icon: '🎯',
+    gradient: 'linear-gradient(135deg,#d97706 0%,#ea580c 55%,#be123c 100%)',
+    minPlayers: 2,
+    maxPlayers: 10,
+    sortOrder: 12,
+  },
+  {
+    slug: 'minefield',
+    title: 'Минное поле',
+    subtitle: 'Открой безопасное',
+    description: '16 карточек, скрытые мины и один неверный клик. Рискни ради очков.',
+    icon: '💥',
+    gradient: 'linear-gradient(135deg,#475569 0%,#7f1d1d 55%,#dc2626 100%)',
+    minPlayers: 2,
+    maxPlayers: 6,
+    sortOrder: 13,
+  },
+] as const;
+
+export async function ensureGameCatalog() {
+  for (const game of GAME_CATALOG) {
+    await prisma.game.upsert({
+      where: { slug: game.slug },
+      update: {
+        title: game.title,
+        subtitle: game.subtitle,
+        description: game.description,
+        icon: game.icon,
+        gradient: game.gradient,
+        minPlayers: game.minPlayers,
+        maxPlayers: game.maxPlayers,
+        sortOrder: game.sortOrder,
+        isActive: true,
+      },
+      create: {
+        ...game,
+        isActive: true,
+      },
+    });
+  }
+}

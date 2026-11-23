@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { prisma } from './lib/prisma.js';
 import { setIO } from './lib/io.js';
 import { initSockets } from './sockets/index.js';
+import { ensureGameCatalog } from './services/gameCatalog.js';
 
 const app = createApp();
 const server = http.createServer(app);
@@ -23,15 +24,25 @@ const io = new Server(server, {
 setIO(io);
 initSockets(io);
 
-server.listen(env.PORT, () => {
-  console.log('');
-  console.log('  FUNBOX API');
-  console.log(`  REST      http://localhost:${env.PORT}/api`);
-  console.log(`  Socket.IO http://localhost:${env.PORT}/socket.io`);
-  console.log(`  Mode      ${env.NODE_ENV}`);
-  console.log(`  WebApp    ${env.APP_URL}`);
-  console.log('');
-});
+async function start() {
+  try {
+    await ensureGameCatalog();
+  } catch (error) {
+    console.error('[game-catalog]', error);
+  }
+
+  server.listen(env.PORT, () => {
+    console.log('');
+    console.log('  FUNBOX API');
+    console.log(`  REST      http://localhost:${env.PORT}/api`);
+    console.log(`  Socket.IO http://localhost:${env.PORT}/socket.io`);
+    console.log(`  Mode      ${env.NODE_ENV}`);
+    console.log(`  WebApp    ${env.APP_URL}`);
+    console.log('');
+  });
+}
+
+void start();
 
 async function shutdown(signal: string) {
   console.log(`\n${signal} received, shutting down…`);

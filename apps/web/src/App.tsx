@@ -13,6 +13,7 @@ import { QuizPage } from './pages/QuizPage';
 import { DuelPage } from './pages/DuelPage';
 import { WyrPage } from './pages/WyrPage';
 import { ImageGamePage } from './pages/ImageGamePage';
+import { MiniGamePage } from './pages/MiniGamePage';
 import { SocialPage } from './pages/SocialPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ChatPage } from './pages/ChatPage';
@@ -73,6 +74,11 @@ export function App() {
         <Route path="games/word-duel" element={<DuelPage />} />
         <Route path="games/wyr" element={<WyrPage />} />
         <Route path="games/image" element={<ImageGamePage />} />
+        <Route path="games/word-bomb" element={<MiniGamePage slug="word-bomb" />} />
+        <Route path="games/bluff-trivia" element={<MiniGamePage slug="bluff-trivia" />} />
+        <Route path="games/converge" element={<MiniGamePage slug="converge" />} />
+        <Route path="games/auction" element={<MiniGamePage slug="auction" />} />
+        <Route path="games/minefield" element={<MiniGamePage slug="minefield" />} />
         <Route path="social" element={<SocialPage />} />
         <Route path="friends" element={<FriendsPage />} />
         <Route path="chat" element={<ChatPage />} />

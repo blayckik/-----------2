@@ -3,6 +3,7 @@ import { verifyToken } from '../lib/jwt.js';
 import { prisma } from '../lib/prisma.js';
 import { attachQuiz } from './quiz.js';
 import { attachDuel } from './duel.js';
+import { attachMinigames } from './minigames.js';
 import { assertParticipant, sendChatMessage } from '../services/chat.js';
 import { emitToUser } from '../lib/io.js';
 
@@ -75,4 +76,5 @@ export function initSockets(io: Server) {
 
   attachQuiz(io);
   attachDuel(io);
+  attachMinigames(io);
 }

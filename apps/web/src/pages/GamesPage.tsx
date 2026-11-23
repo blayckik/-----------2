@@ -26,6 +26,11 @@ const gamePaths: Record<string, string> = {
   'word-duel': '/games/word-duel',
   'would-you-rather': '/games/wyr',
   'guess-image': '/games/image',
+  'word-bomb': '/games/word-bomb',
+  'bluff-trivia': '/games/bluff-trivia',
+  converge: '/games/converge',
+  auction: '/games/auction',
+  minefield: '/games/minefield',
 };
 
 const features: Record<string, string[]> = {
@@ -33,6 +38,11 @@ const features: Record<string, string[]> = {
   'word-duel': ['90 секунд', 'Словарь 100k', 'Дуэль 1×1'],
   'would-you-rather': ['Статистика', 'Свои вопросы', 'Быстрые раунды'],
   'guess-image': ['3 попытки', 'Подсказки', 'Красивые фото'],
+  'word-bomb': ['3 жизни', 'Скрытый таймер', '2–8 игроков'],
+  'bluff-trivia': ['5 раундов', 'Блеф и голосование', '3–8 игроков'],
+  converge: ['10 раундов', 'Ассоциации', 'Дуэль 1×1'],
+  auction: ['5 раундов', 'Числа', '2–10 игроков'],
+  minefield: ['16 карточек', '4 мины', '2–6 игроков'],
 };
 
 export function GamesPage() {
@@ -91,7 +101,7 @@ export function GamesPage() {
           <span className="text-gradient">Поднимайся в топ.</span>
         </h1>
         <p className="mt-2 max-w-md text-[12px] leading-relaxed text-muted">
-          Четыре режима, живые соперники и награды за каждую игру. Начни с быстрого матча или собери друзей в комнате.
+          Девять режимов, живые соперники и награды за каждую игру. Выбери быстрый матч или собери друзей в комнате.
         </p>
       </div>
 
