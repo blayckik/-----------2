@@ -10,7 +10,9 @@ import {
   DoorOpen,
   KeyRound,
   Loader2,
+  Lock,
   Play,
+  Radio,
   Share2,
   Sparkles,
   Timer,
@@ -419,13 +421,20 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
   if (!room) {
     return (
       <div className="px-4 pb-6 pt-3">
-        <button
-          type="button"
-          onClick={() => navigate('/games')}
-          className="mb-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted"
-        >
-          <ArrowLeft size={14} /> Все игры
-        </button>
+        <div className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/games')}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-white/[0.04] text-primary"
+            aria-label="Назад"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-semibold text-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {connected ? 'connected' : 'offline'}
+          </span>
+        </div>
         <div className="relative overflow-hidden rounded-[28px] border border-white/10 p-5" style={{ background: gameMeta?.gradient ?? 'linear-gradient(135deg,#7c3aed,#0891b2)' }}>
           <div className="pointer-events-none absolute -right-8 -top-8 text-[110px] opacity-[0.13]">{config.icon}</div>
           <div className="relative">
@@ -438,36 +447,77 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Card className="p-4">
+            <p className="text-[11px] font-semibold text-muted">Соперники</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
+                <Users size={17} />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold text-primary">Только реальные</p>
+                <p className="text-[9px] text-muted">{config.min}–{config.max} игроков</p>
+              </div>
+            </div>
+            <p className="mt-2 text-[9px] leading-relaxed text-muted/70">Ботов нет. Игра начнётся, когда присоединится нужное число людей.</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-[11px] font-semibold text-muted">Формат</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
+                <Timer size={17} />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold text-primary">
+                  {slug === 'word-bomb' ? '3 жизни' : slug === 'bluff-trivia' ? '5 раундов' : slug === 'converge' ? '10 раундов' : slug === 'auction' ? '5 раундов' : '16 карточек'}
+                </p>
+                <p className="text-[9px] text-muted">Серверный таймер</p>
+              </div>
+            </div>
+            <p className="mt-2 text-[9px] leading-relaxed text-muted/70">Все ответы, очки и таймеры считает сервер.</p>
+          </Card>
+        </div>
+
+        <div className="mt-3 grid gap-3">
           <Card className="p-4">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-violet-300">
               <Play size={13} /> Создать комнату
             </div>
             <p className="mt-1 text-[11px] text-muted">Собери друзей по коду. Игра начнётся, когда все зайдут.</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPrivate(true)}
+            <button
+              type="button"
+              onClick={() => setIsPrivate((value) => !value)}
+              className="mt-3 flex w-full items-center justify-between rounded-2xl border border-line bg-surface/60 px-4 py-3 text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.06] text-muted">
+                  {isPrivate ? <Lock size={15} /> : <Radio size={15} />}
+                </span>
+                <span>
+                  <span className="block text-xs font-semibold text-primary">
+                    {isPrivate ? 'Приватная комната' : 'Публичная комната'}
+                  </span>
+                  <span className="text-[10px] text-muted">
+                    {isPrivate ? 'Только по коду или приглашению' : 'Видна всем в списке комнат'}
+                  </span>
+                </span>
+              </span>
+              <span
                 className={cn(
-                  'rounded-xl border px-2 py-2 text-[10px] font-semibold transition',
-                  isPrivate ? 'border-violet-400/50 bg-violet-500/15 text-violet-200' : 'border-line text-muted',
+                  'relative h-6 w-11 shrink-0 rounded-full border transition',
+                  !isPrivate ? 'border-violet-400/40 bg-violet-500' : 'border-line bg-white/10',
                 )}
               >
-                🔒 Закрытая
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPrivate(false)}
-                className={cn(
-                  'rounded-xl border px-2 py-2 text-[10px] font-semibold transition',
-                  !isPrivate ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : 'border-line text-muted',
-                )}
-              >
-                🌐 Открытая
-              </button>
-            </div>
+                <span
+                  className={cn(
+                    'absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-all',
+                    isPrivate ? 'left-[2px]' : 'left-[22px]',
+                  )}
+                />
+              </span>
+            </button>
             <Button className="mt-3" fullWidth loading={busy === 'create'} onClick={() => void createRoom()} icon={<Users size={15} />}>
-              Создать лобби
+              Создать комнату
             </Button>
           </Card>
 
@@ -524,34 +574,48 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     const canStart = isHost && room.members.length >= config.min;
     return (
       <div className="px-4 pb-6 pt-3">
-        <button
-          type="button"
-          onClick={() => void leave()}
-          className="mb-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted"
-        >
-          <ArrowLeft size={14} /> Выйти
-        </button>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-300">Лобби · {config.title}</p>
-            <h1 className="mt-1 font-display text-[24px] font-semibold">Ждём игроков</h1>
-            <div className="mt-1.5">
-              <Badge tone={room.isPrivate ? 'neutral' : 'emerald'}>
-                {room.isPrivate ? '🔒 Закрытая' : '🌐 Открытая'}
-              </Badge>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[9px] uppercase tracking-wider text-muted">Код</p>
-            <button
-              type="button"
-              onClick={() => void copyInvite()}
-              className="mt-0.5 inline-flex items-center gap-1.5 rounded-xl border border-violet-400/30 bg-violet-500/15 px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em] text-violet-200"
-            >
-              {room.code} {inviteCopied ? <Check size={12} /> : <Copy size={12} />}
-            </button>
-          </div>
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => void leave()}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-white/[0.04] text-primary"
+            aria-label="Выйти"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-semibold text-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            connected
+          </span>
         </div>
+
+        <div className="text-center">
+          <span className="text-4xl">🏟️</span>
+          <h1 className="mt-3 font-display text-2xl font-semibold">Лобби готово</h1>
+          <p className="mt-1 text-xs text-muted">Делитесь кодом и начинайте, когда все соберутся</p>
+        </div>
+
+        <Card className="mt-4 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Код комнаты</span>
+            <Badge tone={room.isPrivate ? 'neutral' : 'emerald'}>
+              {room.isPrivate ? '🔒 закрытая' : '🌐 открытая'}
+            </Badge>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 rounded-2xl border border-line bg-black/25 px-3 py-3 text-center font-mono text-2xl font-black tracking-[0.3em] text-primary">
+              {room.code}
+            </div>
+            <Button
+              variant="glass"
+              size="md"
+              onClick={() => void copyInvite()}
+              icon={inviteCopied ? <Check size={16} /> : <Copy size={16} />}
+            >
+              Copy
+            </Button>
+          </div>
+        </Card>
 
         <Card className="mt-4 p-4">
           <div className="flex items-center justify-between">

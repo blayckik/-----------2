@@ -552,19 +552,9 @@ export function QuizPage() {
                 >
                   Создать комнату
                 </Button>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="secondary" onClick={() => setShowJoin(true)} icon={<DoorOpen size={15} />}>
-                    По коду
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    loading={creating}
-                    onClick={() => createRoom({ privateRoom: false })}
-                    icon={<Radio size={15} />}
-                  >
-                    Публичная
-                  </Button>
-                </div>
+                <Button variant="secondary" fullWidth onClick={() => setShowJoin(true)} icon={<DoorOpen size={15} />}>
+                  Войти по коду
+                </Button>
                 <p className="pt-1 text-center text-[10px] text-muted/60">
                   Без ботов. Отправьте код другу или зайдите в живую комнату.
                 </p>
