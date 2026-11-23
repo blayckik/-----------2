@@ -116,6 +116,32 @@ router.get(
 );
 
 router.get(
+  '/mini/rooms',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const query = z.object({ game: z.string() }).parse(req.query);
+    const allowed = new Set(['word-bomb', 'bluff-trivia', 'converge', 'auction', 'minefield']);
+    if (!allowed.has(query.game)) return ok(res, []);
+    const rooms = await prisma.gameRoom.findMany({
+      where: {
+        status: 'WAITING',
+        isPrivate: false,
+        game: { slug: query.game },
+        createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+      },
+      include: {
+        host: { select: userCardSelect },
+        game: true,
+        participants: { include: { user: { select: userCardSelect } } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    return ok(res, rooms);
+  }),
+);
+
+router.get(
   '/room/:code',
   requireAuth,
   asyncHandler(async (req, res) => {

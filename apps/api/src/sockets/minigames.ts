@@ -408,6 +408,7 @@ async function createLobby(
   slug: GameSlug,
   prefix: string,
   maxPlayers: number,
+  isPrivate: boolean,
   ack?: unknown,
 ) {
   try {
@@ -432,7 +433,7 @@ async function createLobby(
         code,
         gameId: game.id,
         hostId: userId,
-        isPrivate: true,
+        isPrivate,
         maxPlayers,
         participants: { create: [{ userId }] },
       },
@@ -482,7 +483,10 @@ async function joinLobby(
       emitState(io, runtime, {});
     } else {
       const payload = await lobbyState(code);
-      socket.emit(`${prefix}:state`, payload);
+      if (payload) {
+        io.to(CHANNEL(code)).emit(`${prefix}:state`, payload);
+        socket.emit(`${prefix}:state`, payload);
+      }
     }
     ackOk(ack, { joined: true });
   } catch (error) {
@@ -1002,9 +1006,9 @@ export function attachMinigames(io: Server) {
       const { slug, prefix } = config;
 
       socket.on(`${prefix}:create`, (payload: unknown, ack?: unknown) => {
-        const data = payload as { maxPlayers?: number };
+        const data = payload as { maxPlayers?: number; isPrivate?: boolean };
         const max = Math.min(config.max, Math.max(config.min, Number(data?.maxPlayers) || config.max));
-        void createLobby(io, socket, slug, prefix, max, ack);
+        void createLobby(io, socket, slug, prefix, max, data?.isPrivate !== false, ack);
       });
 
       socket.on(`${prefix}:join`, (payload: unknown, ack?: unknown) => {

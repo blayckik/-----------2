@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { api, getErrorMessage } from '../lib/api';
+import { api, BOT_USERNAME, getErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
@@ -121,6 +121,14 @@ interface FinishedState {
   details?: Record<string, unknown>;
 }
 
+interface OpenRoom {
+  id: string;
+  code: string;
+  maxPlayers: number;
+  host: { firstName: string; username?: string | null; avatarUrl?: string | null };
+  participants: Array<{ id: string }>;
+}
+
 function useNow(active: boolean) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -216,7 +224,7 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
 
   const [room, setRoom] = useState<RoomState | null>(null);
   const [finished, setFinished] = useState<FinishedState | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(true);
   const [joinCode, setJoinCode] = useState(codeFromUrl);
   const [busy, setBusy] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -229,6 +237,13 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     queryFn: async () => (await api.get('/games')).data.data as Game[],
   });
   const gameMeta = games?.find((game) => game.slug === slug);
+
+  const { data: openRooms } = useQuery({
+    queryKey: ['mini-rooms', slug],
+    queryFn: async () => (await api.get(`/games/mini/rooms?game=${slug}`)).data.data as OpenRoom[],
+    refetchInterval: 8_000,
+    enabled: !room,
+  });
 
   useEffect(() => {
     if (!socket) return;
@@ -279,13 +294,12 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
   async function createRoom() {
     setBusy('create');
     try {
-      const result = await emitAck<{ room?: RoomState; error?: string }>(`${config.prefix}:create`, {});
+      const result = await emitAck<{ room?: RoomState; error?: string }>(`${config.prefix}:create`, { isPrivate });
       if (result?.error) {
         toast.error(result.error);
         return;
       }
       if (result?.room) setRoom(result.room);
-      setCreateOpen(false);
       haptic('success');
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -347,9 +361,14 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     }
   }
 
+  function roomLink() {
+    if (!room) return '';
+    return `https://t.me/${BOT_USERNAME}?startapp=room_${room.code}`;
+  }
+
   async function copyInvite() {
     if (!room) return;
-    const link = `${window.location.origin}/games/${slug}?code=${room.code}`;
+    const link = roomLink();
     try {
       await navigator.clipboard.writeText(link);
       setInviteCopied(true);
@@ -358,6 +377,12 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     } catch {
       shareInvite(link, `Играем в ${config.title} в FUNBOX`);
     }
+  }
+
+  function shareRoom() {
+    if (!room) return;
+    haptic('light');
+    shareInvite(roomLink(), `Играем в ${config.title} в FUNBOX. Комната ${room.code}`);
   }
 
   if (!connected) {
@@ -373,7 +398,6 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     return <FinishedView config={config} finished={finished} onAgain={() => {
       setFinished(null);
       setRoom(null);
-      setCreateOpen(true);
     }} onExit={() => navigate('/games')} />;
   }
 
@@ -405,6 +429,28 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
               <Play size={13} /> Создать комнату
             </div>
             <p className="mt-1 text-[11px] text-muted">Собери друзей по коду. Игра начнётся, когда все зайдут.</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setIsPrivate(true)}
+                className={cn(
+                  'rounded-xl border px-2 py-2 text-[10px] font-semibold transition',
+                  isPrivate ? 'border-violet-400/50 bg-violet-500/15 text-violet-200' : 'border-line text-muted',
+                )}
+              >
+                🔒 Закрытая
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPrivate(false)}
+                className={cn(
+                  'rounded-xl border px-2 py-2 text-[10px] font-semibold transition',
+                  !isPrivate ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : 'border-line text-muted',
+                )}
+              >
+                🌐 Открытая
+              </button>
+            </div>
             <Button className="mt-3" fullWidth loading={busy === 'create'} onClick={() => void createRoom()} icon={<Users size={15} />}>
               Создать лобби
             </Button>
@@ -428,6 +474,32 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
             </div>
           </Card>
         </div>
+
+        {openRooms && openRooms.length > 0 && (
+          <Card className="mt-3 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                <Users size={13} /> Открытые лобби
+              </div>
+              <span className="text-[9px] text-muted">{openRooms.length}</span>
+            </div>
+            <div className="mt-2 space-y-2">
+              {openRooms.map((open) => (
+                <div key={open.id} className="flex items-center gap-2 rounded-xl border border-line bg-white/[0.03] p-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-bold">{open.host.firstName}</p>
+                    <p className="text-[9px] text-muted">
+                      {open.participants.length}/{open.maxPlayers} игроков · {open.code}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="secondary" loading={busy === 'join'} onClick={() => void join(open.code)}>
+                    Войти
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
     );
   }
@@ -448,6 +520,11 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-300">Лобби · {config.title}</p>
             <h1 className="mt-1 font-display text-[24px] font-semibold">Ждём игроков</h1>
+            <div className="mt-1.5">
+              <Badge tone={room.isPrivate ? 'neutral' : 'emerald'}>
+                {room.isPrivate ? '🔒 Закрытая' : '🌐 Открытая'}
+              </Badge>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-[9px] uppercase tracking-wider text-muted">Код</p>
@@ -490,13 +567,23 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
         </Card>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => void copyInvite()} icon={<Share2 size={14} />}>
-            Пригласить
+          <Button variant="secondary" onClick={() => void copyInvite()} icon={inviteCopied ? <Check size={14} /> : <Copy size={14} />}>
+            {inviteCopied ? 'Скопировано' : 'Ссылка'}
           </Button>
-          <Button fullWidth disabled={!canStart} loading={busy === 'start'} onClick={() => void start()} icon={<Play size={15} />}>
-            {isHost ? 'Начать' : 'Ждём хоста'}
+          <Button variant="secondary" onClick={shareRoom} icon={<Share2 size={14} />}>
+            Поделиться
           </Button>
         </div>
+        <Button
+          className="mt-2"
+          fullWidth
+          disabled={!canStart}
+          loading={busy === 'start'}
+          onClick={() => void start()}
+          icon={<Play size={15} />}
+        >
+          {isHost ? 'Начать игру' : 'Ждём хоста'}
+        </Button>
         <p className="mt-3 text-center text-[10px] text-muted">{config.rules}</p>
       </div>
     );

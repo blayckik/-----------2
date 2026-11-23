@@ -264,15 +264,18 @@ export function HomePage() {
               whileTap={{ scale: 0.975 }}
               onClick={() => {
                 haptic('light');
-                const path =
-                  game.slug === 'quiz-battle'
-                    ? '/games/quiz'
-                    : game.slug === 'word-duel'
-                      ? '/games/word-duel'
-                      : game.slug === 'would-you-rather'
-                        ? '/games/wyr'
-                        : '/games/image';
-                navigate(path);
+                const paths: Record<string, string> = {
+                  'quiz-battle': '/games/quiz',
+                  'word-duel': '/games/word-duel',
+                  'would-you-rather': '/games/wyr',
+                  'guess-image': '/games/image',
+                  'word-bomb': '/games/word-bomb',
+                  'bluff-trivia': '/games/bluff-trivia',
+                  converge: '/games/converge',
+                  auction: '/games/auction',
+                  minefield: '/games/minefield',
+                };
+                navigate(paths[game.slug] ?? '/games');
               }}
               className="group relative overflow-hidden rounded-3xl border border-white/[0.1] p-4 text-left shadow-card"
               style={{ background: game.gradient }}
