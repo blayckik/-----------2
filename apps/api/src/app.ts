@@ -17,6 +17,7 @@ import socialRoutes from './routes/social.js';
 import friendsRoutes from './routes/friends.js';
 import chatRoutes from './routes/chat.js';
 import gameRoutes from './routes/games.js';
+import soloRoutes from './routes/solo.js';
 import questRoutes from './routes/quests.js';
 import achievementRoutes from './routes/achievements.js';
 import leaderboardRoutes from './routes/leaderboard.js';
@@ -90,6 +91,7 @@ export function createApp() {
   app.use('/api/friends', friendsRoutes);
   app.use('/api/chat', chatRoutes);
   app.use('/api/games', gameRoutes);
+  app.use('/api/solo', soloRoutes);
   app.use('/api/quests', questRoutes);
   app.use('/api/achievements', achievementRoutes);
   app.use('/api/leaderboard', leaderboardRoutes);

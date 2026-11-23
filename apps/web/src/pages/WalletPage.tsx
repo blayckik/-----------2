@@ -56,6 +56,39 @@ export function WalletPage() {
     queryKey: ['shop'],
     queryFn: async () => (await api.get('/wallet/shop')).data.data as ShopItem[],
   });
+  const { data: cases } = useQuery({
+    queryKey: ['cases'],
+    queryFn: async () =>
+      (await api.get('/wallet/cases')).data.data as Array<{
+        code: string;
+        name: string;
+        description: string;
+        price: number;
+        icon: string;
+        accent: string;
+      }>,
+  });
+
+  const openCase = useMutation({
+    mutationFn: async (code: string) => (await api.post(`/wallet/cases/${code}/open`)).data.data,
+    onSuccess: (result) => {
+      haptic('success');
+      const reward = result.reward;
+      toast.success(
+        reward.item
+          ? `Выпал предмет: ${reward.item.icon} ${reward.item.name}`
+          : reward.coins > 0
+            ? `Выпало +${reward.coins} FUN Coins`
+            : `Выпало +${reward.xp} XP`,
+      );
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['shop'] });
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      void refreshMe();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
 
   const claimDaily = useMutation({
     mutationFn: async () => (await api.post('/wallet/daily')).data.data,
@@ -241,6 +274,38 @@ export function WalletPage() {
               <Coins size={11} /> {formatNumber(data.balance)}
             </span>
           </div>
+          {cases && cases.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-primary">Кейсы FUN</p>
+              <div className="grid grid-cols-2 gap-2">
+                {cases.map((entry) => (
+                  <Card key={entry.code} className="relative overflow-hidden p-3">
+                    <div className="absolute -right-5 -top-6 h-20 w-20 rounded-full blur-2xl" style={{ background: `${entry.accent}35` }} />
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">{entry.icon}</span>
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                          <Coins size={10} /> {entry.price}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[11px] font-bold">{entry.name}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[9px] text-muted">{entry.description}</p>
+                      <Button
+                        size="sm"
+                        className="mt-2"
+                        fullWidth
+                        loading={openCase.isPending}
+                        disabled={data.balance < entry.price}
+                        onClick={() => openCase.mutate(entry.code)}
+                      >
+                        Открыть
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2.5">
             {shop?.map((item) => (
               <Card key={item.id} className={cn('relative overflow-hidden p-4', item.owned && 'opacity-65')}>

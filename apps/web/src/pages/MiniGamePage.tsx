@@ -28,7 +28,7 @@ import { useToast } from '../context/ToastContext';
 import { haptic, shareInvite } from '../lib/telegram';
 import { cn, formatNumber } from '../lib/utils';
 import type { Game } from '../types';
-import { Badge, Button, Card, Input, Modal, Spinner } from '../components/ui';
+import { Avatar, Badge, Button, Card, Input, Modal, Spinner } from '../components/ui';
 
 type Slug = 'word-bomb' | 'bluff-trivia' | 'converge' | 'auction' | 'minefield';
 
@@ -132,6 +132,14 @@ interface OpenRoom {
   participants: Array<{ id: string }>;
 }
 
+interface Friend {
+  id: string;
+  firstName: string;
+  username?: string | null;
+  avatarUrl?: string | null;
+  level: number;
+}
+
 function useNow(active: boolean) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -232,6 +240,8 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<{ link: string; code: string; sent: number } | null>(null);
+  const [invitePickerOpen, setInvitePickerOpen] = useState(false);
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const autoJoinRef = useRef(false);
 
   const now = useNow(Boolean(room && room.phase !== 'lobby'));
@@ -247,6 +257,12 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     queryFn: async () => (await api.get(`/games/mini/rooms?game=${slug}`)).data.data as OpenRoom[],
     refetchInterval: 8_000,
     enabled: !room,
+  });
+
+  const { data: friends, isLoading: friendsLoading } = useQuery({
+    queryKey: ['friends', 'invite'],
+    queryFn: async () => (await api.get('/friends')).data.data as Friend[],
+    enabled: invitePickerOpen,
   });
 
   useEffect(() => {
@@ -389,12 +405,22 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
     shareInvite(roomLink(), `Играем в ${config.title} в FUNBOX. Комната ${room.code}`);
   }
 
-  async function inviteFriends() {
-    if (!room) return;
+  function openInvitePicker() {
+    setSelectedFriends([]);
+    setInvitePickerOpen(true);
+  }
+
+  async function sendInvites() {
+    if (!room || selectedFriends.length === 0) {
+      toast.error('Выбери хотя бы одного друга');
+      return;
+    }
     try {
-      const result = await api.post(`/games/room/${room.code}/invite`);
+      const result = await api.post(`/games/room/${room.code}/invite`, { userIds: selectedFriends });
       const info = result.data.data as { link: string; code: string; sent: number };
+      setInvitePickerOpen(false);
       setInviteInfo(info);
+      setSelectedFriends([]);
       if (info.sent === 0) toast.info('Ссылка готова — отправь её другу');
       else toast.success(`Приглашение отправлено ${info.sent} друзьям`);
     } catch (error) {
@@ -646,7 +672,7 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
         </Card>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => void inviteFriends()} icon={<UserPlus size={14} />}>
+          <Button variant="secondary" onClick={openInvitePicker} icon={<UserPlus size={14} />}>
             Пригласить
           </Button>
           <Button variant="secondary" onClick={shareRoom} icon={<Share2 size={14} />}>
@@ -674,6 +700,19 @@ export function MiniGamePage({ slug }: { slug: Slug }) {
         </Button>
         <p className="mt-3 text-center text-[10px] text-muted">{config.rules}</p>
         <InviteModal info={inviteInfo} onClose={() => setInviteInfo(null)} toast={toast} />
+        <FriendPickerModal
+          open={invitePickerOpen}
+          friends={friends ?? []}
+          loading={friendsLoading}
+          selected={selectedFriends}
+          onToggle={(id) =>
+            setSelectedFriends((current) =>
+              current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
+            )
+          }
+          onClose={() => setInvitePickerOpen(false)}
+          onSend={() => void sendInvites()}
+        />
       </div>
     );
   }
@@ -1202,6 +1241,74 @@ function MineBoard({
         Безопасных осталось: {room.safeLeft ?? '—'} · мины скрыты сервером
       </p>
     </div>
+  );
+}
+
+function FriendPickerModal({
+  open,
+  friends,
+  loading,
+  selected,
+  onToggle,
+  onClose,
+  onSend,
+}: {
+  open: boolean;
+  friends: Friend[];
+  loading: boolean;
+  selected: string[];
+  onToggle: (id: string) => void;
+  onClose: () => void;
+  onSend: () => void;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Пригласить друзей"
+      footer={
+        <Button fullWidth disabled={selected.length === 0} onClick={onSend} icon={<UserPlus size={15} />}>
+          Отправить {selected.length > 0 ? `(${selected.length})` : ''}
+        </Button>
+      }
+    >
+      <div className="space-y-2 pb-1">
+        <p className="text-[11px] text-muted">Выбери, кому отправить приглашение. Уведомление придёт только выбранным друзьям.</p>
+        {loading && (
+          <div className="flex items-center justify-center py-6">
+            <Spinner />
+          </div>
+        )}
+        {!loading && friends.length === 0 && (
+          <div className="rounded-xl border border-dashed border-line p-4 text-center text-[11px] text-muted">
+            У тебя пока нет друзей в FUNBOX. Скопируй ссылку и отправь её вручную.
+          </div>
+        )}
+        {!loading && friends.map((friend) => {
+          const checked = selected.includes(friend.id);
+          return (
+            <button
+              key={friend.id}
+              type="button"
+              onClick={() => onToggle(friend.id)}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition',
+                checked ? 'border-violet-400/50 bg-violet-500/15' : 'border-line bg-white/[0.03]',
+              )}
+            >
+              <Avatar user={{ ...friend, lastName: null }} size={36} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold text-primary">{friend.firstName}</span>
+                <span className="block text-[9px] text-muted">{friend.username ? `@${friend.username}` : `Ур. ${friend.level}`}</span>
+              </span>
+              <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', checked ? 'border-violet-300 bg-violet-500 text-white' : 'border-line')}>
+                {checked && <Check size={12} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </Modal>
   );
 }
 

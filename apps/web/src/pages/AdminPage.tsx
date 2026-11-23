@@ -33,7 +33,7 @@ import { api, assetUrl, getErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { cn, formatDate, formatNumber, rarityColor, timeAgo, userName } from '../lib/utils';
-import type { Achievement } from '../types';
+import type { Achievement, Profile } from '../types';
 import {
   Avatar,
   Badge,
@@ -74,6 +74,7 @@ interface AdminUser {
   createdAt: string;
   lastActiveAt: string;
   stats?: { gamesPlayed: number; gamesWon: number } | null;
+  profile?: Profile | null;
 }
 
 interface AdminStats {
@@ -318,6 +319,7 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [balanceUser, setBalanceUser] = useState<AdminUser | null>(null);
+  const [profileUser, setProfileUser] = useState<AdminUser | null>(null);
   const [banUser, setBanUser] = useState<AdminUser | null>(null);
   const [banReason, setBanReason] = useState('Нарушение правил');
 
@@ -445,14 +447,24 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
                   <td className="px-3 py-3">
                     <div className="flex justify-end gap-1">
                       {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => setBalanceUser(user)}
-                          className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-amber-300"
-                          title="Изменить баланс"
-                        >
-                          <Coins size={14} />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setProfileUser(user)}
+                            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-violet-300"
+                            title="Редактировать профиль"
+                          >
+                            <UserCog size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBalanceUser(user)}
+                            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-amber-300"
+                            title="Изменить баланс"
+                          >
+                            <Coins size={14} />
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"
@@ -491,7 +503,116 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
       </Modal>
 
       <BalanceModal user={balanceUser} onClose={() => setBalanceUser(null)} onConfirm={(amount, reason) => balance.mutate({ amount, reason })} loading={balance.isPending} />
+      {profileUser && (
+        <ProfileEditor
+          key={profileUser.id}
+          user={profileUser}
+          onClose={() => setProfileUser(null)}
+          onSaved={() => {
+            setProfileUser(null);
+            invalidate();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function ProfileEditor({ user, onClose, onSaved }: { user: AdminUser; onClose: () => void; onSaved: () => void }) {
+  const toast = useToast();
+  const [form, setForm] = useState({
+    firstName: user.firstName,
+    lastName: user.lastName ?? '',
+    username: user.username ?? '',
+    level: String(user.level),
+    xp: String(user.xp),
+    coins: String(user.coins),
+    role: user.role,
+    displayName: user.profile?.displayName ?? '',
+    bio: user.profile?.bio ?? '',
+    accentColor: user.profile?.accentColor ?? '#8b5cf6',
+    bannerUrl: user.profile?.bannerUrl ?? '',
+    country: user.profile?.country ?? '',
+    gamesPlayed: String(user.stats?.gamesPlayed ?? 0),
+    gamesWon: String(user.stats?.gamesWon ?? 0),
+  });
+  const save = useMutation({
+    mutationFn: async () =>
+      api.patch(`/admin/users/${user.id}/profile`, {
+        firstName: form.firstName,
+        lastName: form.lastName || null,
+        username: form.username || null,
+        level: Number(form.level),
+        xp: Number(form.xp),
+        coins: Number(form.coins),
+        role: form.role,
+        displayName: form.displayName || null,
+        bio: form.bio || null,
+        accentColor: form.accentColor,
+        bannerUrl: form.bannerUrl || null,
+        country: form.country || null,
+        stats: {
+          gamesPlayed: Number(form.gamesPlayed),
+          gamesWon: Number(form.gamesWon),
+        },
+      }),
+    onSuccess: () => {
+      toast.success('Профиль обновлён');
+      onSaved();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Управление профилем"
+      size="lg"
+      footer={<Button fullWidth loading={save.isPending} onClick={() => save.mutate()}>Сохранить профиль</Button>}
+    >
+      <div className="space-y-3 pb-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Input label="Имя" value={form.firstName} onChange={(event) => setForm({ ...form, firstName: event.target.value })} />
+          <Input label="Фамилия" value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Input label="Username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-semibold text-muted">Роль</span>
+            <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AdminUser['role'] })} className="h-10 w-full rounded-xl border border-line bg-[#12121f] px-2 text-xs">
+              <option value="USER">USER</option>
+              <option value="MODERATOR">MODERATOR</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Input label="Уровень" type="number" value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })} />
+          <Input label="XP" type="number" value={form.xp} onChange={(event) => setForm({ ...form, xp: event.target.value })} />
+          <Input label="FUN Coins" type="number" value={form.coins} onChange={(event) => setForm({ ...form, coins: event.target.value })} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Input label="Игр сыграно" type="number" value={form.gamesPlayed} onChange={(event) => setForm({ ...form, gamesPlayed: event.target.value })} />
+          <Input label="Побед" type="number" value={form.gamesWon} onChange={(event) => setForm({ ...form, gamesWon: event.target.value })} />
+        </div>
+        <Input label="Отображаемое имя" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} />
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-semibold text-muted">Био</span>
+          <textarea
+            value={form.bio}
+            onChange={(event) => setForm({ ...form, bio: event.target.value })}
+            className="min-h-[72px] w-full rounded-xl border border-line bg-[#12121f] px-3 py-2 text-xs text-primary outline-none"
+            maxLength={300}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <Input label="Акцент (#hex)" value={form.accentColor} onChange={(event) => setForm({ ...form, accentColor: event.target.value })} />
+          <Input label="Страна" value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} />
+        </div>
+        <Input label="Баннер URL" value={form.bannerUrl} onChange={(event) => setForm({ ...form, bannerUrl: event.target.value })} />
+      </div>
+    </Modal>
   );
 }
 

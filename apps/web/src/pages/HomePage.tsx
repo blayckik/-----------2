@@ -274,6 +274,8 @@ export function HomePage() {
                   converge: '/games/converge',
                   auction: '/games/auction',
                   minefield: '/games/minefield',
+                  'math-sprint': '/games/math-sprint',
+                  'number-guess': '/games/number-guess',
                 };
                 navigate(paths[game.slug] ?? '/games');
               }}

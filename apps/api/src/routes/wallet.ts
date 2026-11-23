@@ -3,8 +3,28 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler, badRequest, conflict, notFound, ok } from '../lib/http.js';
 import { requireAuth } from '../middleware/auth.js';
-import { dateKey, grantDailyReward } from '../services/progress.js';
+import { dateKey, grantDailyReward, levelFromXp } from '../services/progress.js';
 import { notifyUser } from '../services/notifications.js';
+import { randomUUID } from 'node:crypto';
+
+const CASES = [
+  {
+    code: 'starter',
+    name: 'FUN Стартер',
+    description: 'Шанс на монеты, опыт или предмет из магазина.',
+    price: 150,
+    icon: '🎁',
+    accent: '#8b5cf6',
+  },
+  {
+    code: 'premium',
+    name: 'FUN Премиум',
+    description: 'Больше монет и повышенный шанс на косметику.',
+    price: 500,
+    icon: '💎',
+    accent: '#f59e0b',
+  },
+] as const;
 
 const router = Router();
 
@@ -150,6 +170,123 @@ router.post(
       body: `${item.name} теперь в вашей коллекции.`,
     });
     return ok(res, { purchased: true, balance: user.coins, item });
+  }),
+);
+
+router.get(
+  '/cases',
+  requireAuth,
+  asyncHandler(async (_req, res) => {
+    return ok(res, CASES);
+  }),
+);
+
+router.post(
+  '/cases/:code/open',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const userId = req.auth!.id;
+    const definition = CASES.find((entry) => entry.code === req.params.code);
+    if (!definition) return notFound('Кейс не найден');
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { coins: true } });
+    if (user.coins < definition.price) throw badRequest('Недостаточно FUN Coins');
+
+    const roll = Math.random();
+    const itemChance = definition.code === 'premium' ? 0.32 : 0.18;
+    let rewardType: 'item' | 'coins' | 'xp' = roll < itemChance ? 'item' : roll < itemChance + 0.55 ? 'coins' : 'xp';
+
+    let rewardCoins = 0;
+    let rewardXp = 0;
+    let rewardItem: { id: string; name: string; icon: string } | null = null;
+
+    if (rewardType === 'coins') {
+      const [min, max] = definition.code === 'premium' ? [500, 1800] : [200, 700];
+      rewardCoins = Math.floor(Math.random() * (max - min + 1)) + min;
+    } else if (rewardType === 'xp') {
+      const [min, max] = definition.code === 'premium' ? [180, 650] : [70, 260];
+      rewardXp = Math.floor(Math.random() * (max - min + 1)) + min;
+    } else {
+      const [items, owned] = await Promise.all([
+        prisma.shopItem.findMany({ where: { isActive: true }, orderBy: { price: 'desc' } }),
+        prisma.purchase.findMany({ where: { userId }, select: { itemId: true } }),
+      ]);
+      const ownedIds = new Set(owned.map((entry) => entry.itemId));
+      const available = items.filter((item) => !ownedIds.has(item.id));
+      rewardItem = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : null;
+      if (!rewardItem) {
+        rewardType = 'coins';
+        rewardCoins = definition.code === 'premium' ? 900 : 300;
+      }
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: userId },
+        data: {
+          coins: { increment: rewardCoins - definition.price },
+          xp: { increment: rewardXp },
+        },
+        select: { coins: true, xp: true, level: true },
+      });
+      const level = levelFromXp(updated.xp);
+      if (level !== updated.level) {
+        await tx.user.update({ where: { id: userId }, data: { level } });
+      }
+      await tx.wallet.upsert({
+        where: { userId },
+        update: {
+          totalSpent: { increment: definition.price },
+          totalEarned: { increment: rewardCoins },
+        },
+        create: {
+          userId,
+          totalSpent: definition.price,
+          totalEarned: rewardCoins,
+        },
+      });
+      if (rewardItem) {
+        await tx.purchase.upsert({
+          where: { userId_itemId: { userId, itemId: rewardItem.id } },
+          update: {},
+          create: { userId, itemId: rewardItem.id, price: 0 },
+        });
+      }
+      await tx.transaction.create({
+        data: {
+          userId,
+          amount: rewardCoins - definition.price,
+          type: 'SHOP',
+          description: `Кейс «${definition.name}»: ${
+            rewardItem ? rewardItem.name : rewardCoins > 0 ? `+${rewardCoins} FUN` : `+${rewardXp} XP`
+          }`,
+          reference: `case:${definition.code}:${userId}:${randomUUID()}`,
+          metadata: { case: definition.code, rewardType, rewardCoins, rewardXp, itemId: rewardItem?.id ?? null },
+        },
+      });
+      return { ...updated, level };
+    });
+
+    await notifyUser({
+      userId,
+      type: 'REWARD',
+      title: `Кейс «${definition.name}» открыт 🎁`,
+      body: rewardItem
+        ? `${rewardItem.icon} ${rewardItem.name} — теперь в коллекции.`
+        : rewardCoins > 0
+          ? `Тебе выпало +${rewardCoins} FUN Coins.`
+          : `Тебе выпало +${rewardXp} XP.`,
+    });
+
+    return ok(res, {
+      case: definition,
+      reward: {
+        type: rewardType,
+        coins: rewardCoins,
+        xp: rewardXp,
+        item: rewardItem,
+      },
+      balance: result.coins,
+    });
   }),
 );
 

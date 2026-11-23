@@ -31,6 +31,8 @@ const gamePaths: Record<string, string> = {
   converge: '/games/converge',
   auction: '/games/auction',
   minefield: '/games/minefield',
+  'math-sprint': '/games/math-sprint',
+  'number-guess': '/games/number-guess',
 };
 
 const features: Record<string, string[]> = {
@@ -43,6 +45,8 @@ const features: Record<string, string[]> = {
   converge: ['10 раундов', 'Ассоциации', 'Дуэль 1×1'],
   auction: ['5 раундов', 'Числа', '2–10 игроков'],
   minefield: ['16 карточек', '4 мины', '2–6 игроков'],
+  'math-sprint': ['60 секунд', '12 примеров', 'Соло'],
+  'number-guess': ['8 попыток', '1–100', 'Соло'],
 };
 
 export function GamesPage() {
@@ -109,7 +113,7 @@ export function GamesPage() {
           <span className="text-gradient">Поднимайся в топ.</span>
         </h1>
         <p className="mt-2 max-w-md text-[12px] leading-relaxed text-muted">
-          Девять режимов, живые соперники и награды за каждую игру. Выбери быстрый матч или собери друзей в комнате.
+          Одиннадцать режимов, живые соперники и награды за каждую игру. Выбери быстрый матч или собери друзей в комнате.
         </p>
       </div>
 

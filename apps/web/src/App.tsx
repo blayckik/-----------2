@@ -14,6 +14,7 @@ import { DuelPage } from './pages/DuelPage';
 import { WyrPage } from './pages/WyrPage';
 import { ImageGamePage } from './pages/ImageGamePage';
 import { MiniGamePage } from './pages/MiniGamePage';
+import { MathSprintPage, NumberGuessPage } from './pages/SoloGamesPage';
 import { SocialPage } from './pages/SocialPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ChatPage } from './pages/ChatPage';
@@ -79,6 +80,8 @@ export function App() {
         <Route path="games/converge" element={<MiniGamePage slug="converge" />} />
         <Route path="games/auction" element={<MiniGamePage slug="auction" />} />
         <Route path="games/minefield" element={<MiniGamePage slug="minefield" />} />
+        <Route path="games/math-sprint" element={<MathSprintPage />} />
+        <Route path="games/number-guess" element={<NumberGuessPage />} />
         <Route path="social" element={<SocialPage />} />
         <Route path="friends" element={<FriendsPage />} />
         <Route path="chat" element={<ChatPage />} />
@@ -178,6 +181,8 @@ function JoinRedirect() {
       converge: '/games/converge',
       auction: '/games/auction',
       minefield: '/games/minefield',
+      'math-sprint': '/games/math-sprint',
+      'number-guess': '/games/number-guess',
     };
     navigate(`${routes[slug ?? ''] ?? '/games/quiz'}?code=${data.code}`, { replace: true });
   }, [data, navigate]);

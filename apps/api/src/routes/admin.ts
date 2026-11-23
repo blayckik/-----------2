@@ -136,9 +136,11 @@ router.get(
           banReason: true,
           role: true,
           level: true,
+          xp: true,
           lastActiveAt: true,
           createdAt: true,
           stats: true,
+          profile: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.limit,
@@ -211,6 +213,143 @@ router.patch(
         metadata: { targetUserId: target.id, role: body.role },
       },
     });
+    return ok(res, user);
+  }),
+);
+
+router.patch(
+  '/users/:id/profile',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const body = z
+      .object({
+        firstName: z.string().trim().min(1).max(64).optional(),
+        lastName: z.string().trim().max(64).nullable().optional(),
+        username: z
+          .string()
+          .trim()
+          .min(3)
+          .max(32)
+          .regex(/^[a-zA-Z0-9_]+$/)
+          .nullable()
+          .optional(),
+        avatarUrl: optionalImageUrlSchema,
+        bio: z.string().trim().max(300).nullable().optional(),
+        displayName: z.string().trim().max(64).nullable().optional(),
+        accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+        bannerUrl: optionalImageUrlSchema,
+        country: z.string().trim().max(64).nullable().optional(),
+        level: z.number().int().min(1).max(999).optional(),
+        xp: z.number().int().min(0).max(100_000_000).optional(),
+        coins: z.number().int().min(0).max(100_000_000).optional(),
+        role: z.enum(['USER', 'MODERATOR', 'ADMIN']).optional(),
+        isBanned: z.boolean().optional(),
+        banReason: z.string().trim().max(300).nullable().optional(),
+        hideFriends: z.boolean().optional(),
+        hideActivity: z.boolean().optional(),
+        allowStrangersMessages: z.boolean().optional(),
+        allowGameInvites: z.boolean().optional(),
+        stats: z
+          .object({
+            gamesPlayed: z.number().int().min(0).max(1_000_000).optional(),
+            gamesWon: z.number().int().min(0).max(1_000_000).optional(),
+            quizWins: z.number().int().min(0).max(1_000_000).optional(),
+            friendsCount: z.number().int().min(0).max(1_000_000).optional(),
+            postsCount: z.number().int().min(0).max(1_000_000).optional(),
+            likesReceived: z.number().int().min(0).max(1_000_000).optional(),
+            messagesSent: z.number().int().min(0).max(1_000_000).optional(),
+            wordsSubmitted: z.number().int().min(0).max(1_000_000).optional(),
+            imagesGuessed: z.number().int().min(0).max(1_000_000).optional(),
+            wyrVotes: z.number().int().min(0).max(1_000_000).optional(),
+            loginStreak: z.number().int().min(0).max(10_000).optional(),
+            xpEarned: z.number().int().min(0).max(100_000_000).optional(),
+            coinsEarned: z.number().int().min(0).max(100_000_000).optional(),
+          })
+          .optional(),
+      })
+      .parse(req.body);
+
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return notFound('Пользователь не найден');
+    if (body.role && target.id === req.auth!.id && body.role !== target.role) {
+      throw badRequest('Нельзя изменить собственную роль');
+    }
+    if (body.role && target.role === 'ADMIN' && body.role !== 'ADMIN') {
+      const admins = await prisma.user.count({ where: { role: 'ADMIN', isBanned: false } });
+      if (admins <= 1) throw badRequest('Нельзя снять роль с последнего администратора');
+    }
+    if (body.username && body.username !== target.username) {
+      const exists = await prisma.user.findUnique({ where: { username: body.username } });
+      if (exists) throw badRequest('Этот username уже занят');
+    }
+
+    const nextXp = body.xp ?? target.xp;
+    const nextLevel = body.level ?? levelFromXp(nextXp);
+    const data: Prisma.UserUpdateInput = {};
+    if (body.firstName !== undefined) data.firstName = body.firstName;
+    if (body.lastName !== undefined) data.lastName = body.lastName;
+    if (body.username !== undefined) data.username = body.username;
+    if (body.avatarUrl !== undefined) data.avatarUrl = body.avatarUrl;
+    if (body.coins !== undefined) data.coins = body.coins;
+    if (body.role !== undefined) data.role = body.role;
+    if (body.isBanned !== undefined) data.isBanned = body.isBanned;
+    if (body.banReason !== undefined) data.banReason = body.banReason;
+    if (body.xp !== undefined || body.level !== undefined) {
+      data.xp = nextXp;
+      data.level = nextLevel;
+    }
+    data.profile = {
+      upsert: {
+        create: {
+          displayName: body.displayName ?? null,
+          bio: body.bio ?? null,
+          accentColor: body.accentColor ?? '#8b5cf6',
+          bannerUrl: body.bannerUrl ?? null,
+          country: body.country ?? null,
+          hideFriends: body.hideFriends ?? false,
+          hideActivity: body.hideActivity ?? false,
+          allowStrangersMessages: body.allowStrangersMessages ?? true,
+          allowGameInvites: body.allowGameInvites ?? true,
+        },
+        update: {
+          displayName: body.displayName,
+          bio: body.bio,
+          accentColor: body.accentColor,
+          bannerUrl: body.bannerUrl,
+          country: body.country,
+          hideFriends: body.hideFriends,
+          hideActivity: body.hideActivity,
+          allowStrangersMessages: body.allowStrangersMessages,
+          allowGameInvites: body.allowGameInvites,
+        },
+      },
+    };
+
+    const user = await prisma.user.update({
+      where: { id: target.id },
+      data,
+      include: { profile: true, stats: true },
+    });
+
+    if (body.stats) {
+      await prisma.userStat.upsert({
+        where: { userId: target.id },
+        create: { userId: target.id, ...body.stats },
+        update: body.stats,
+      });
+    }
+
+    await prisma.activityLog.create({
+      data: {
+        userId: req.auth!.id,
+        action: 'admin.user.profile',
+        metadata: {
+          targetUserId: target.id,
+          fields: Object.keys(body),
+        },
+      },
+    });
+
     return ok(res, user);
   }),
 );
