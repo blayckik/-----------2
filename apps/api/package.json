@@ -13,7 +13,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:prod": "cross-env SEED_MODE=production tsx prisma/seed.ts",
-    "db:reset:prod": "cross-env SEED_MODE=production SEED_RESET=true tsx prisma/seed.ts",
+    "db:reset:prod": "cross-env SEED_MODE=production SEED_RESET=true ALLOW_DESTRUCTIVE_SEED=true tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

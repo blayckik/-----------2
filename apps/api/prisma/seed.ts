@@ -424,7 +424,12 @@ async function main() {
     await truncate();
   } else {
     console.log('🌱 Seeding FUNBOX production content (no demo users)…');
-    if (process.env.SEED_RESET === 'true') {
+    const resetRequested = process.env.SEED_RESET === 'true';
+    const resetAllowed = process.env.ALLOW_DESTRUCTIVE_SEED === 'true';
+    if (resetRequested && !resetAllowed) {
+      console.warn('⚠️  SEED_RESET ignored: ALLOW_DESTRUCTIVE_SEED is not true.');
+    }
+    if (resetRequested && resetAllowed) {
       console.log('⚠️  SEED_RESET=true — очищаем таблицы перед production seed.');
       await truncate();
     }
